@@ -6,7 +6,13 @@ Hugo系列核心库
 
 ## 环境依赖
 
-暂无
+Visual Studio 2022
+
+## 项目依赖
+
+[WinUtils](https://github.com/howdy213/WinUtils)(Windows微功能组件库，已内置)
+
+[cpp-httplib](https://github.com/yhirose/cpp-httplib)(HTTP/HTTPS网络库，依赖OpenSSL，已内置)
 
 ## 免责声明
 
@@ -15,8 +21,4 @@ Hugo系列核心库
 ## 许可证
 
 本项目采用 GPLv3 许可证，详情参见 LICENSE 文件。
-
-## 项目依赖
-
-[WinUtils](https://github.com/howdy213/WinUtils)(Windows微功能组件库，已内置)
 

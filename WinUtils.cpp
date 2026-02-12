@@ -1,10 +1,14 @@
 #include "WinUtils.h"
 #include "Logger.h"
+#include "StrConvert.h"
+#include "hashlib/md5.h"
 #include <ShlObj.h>
 #include <format>
 #include <thread>
 using namespace std;
+using namespace WinUtils;
 constexpr const wchar_t* MONITOR_WND_CLASS = L"WinUtils_ProcessMonitor_Class";
+Logger logger(L"WinUtils");
 
 struct MonitorThreadParam {
 	HANDLE exitEvent;
@@ -38,7 +42,7 @@ DWORD WINAPI MonitorThread(LPVOID lpParam) {
 bool WinUtils::EnumProcesses(const FindProcCallback& callback) {
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (hSnapshot == INVALID_HANDLE_VALUE) {
-		WuDebug(LogLevel::Error, format(L"CreateToolhelp32Snapshot fail: {}", GetWindowsErrorMsg()));
+		logger.DLog(LogLevel::Error, format(L"CreateToolhelp32Snapshot fail: {}", GetWindowsErrorMsg()));
 		return false;
 	}
 
@@ -46,7 +50,7 @@ bool WinUtils::EnumProcesses(const FindProcCallback& callback) {
 	entry.dwSize = sizeof(PROCESSENTRY32W);
 
 	if (!Process32FirstW(hSnapshot, &entry)) {
-		WuDebug(LogLevel::Error, format(L"Process32FirstW fail: {}", GetWindowsErrorMsg()));
+		logger.DLog(LogLevel::Error, format(L"Process32FirstW fail: {}", GetWindowsErrorMsg()));
 		CloseHandle(hSnapshot);
 		return false;
 	}
@@ -80,13 +84,13 @@ std::optional<PROCESSENTRY32W> WinUtils::FindFirstProcess(const FindProcCallback
 bool WinUtils::EnableDebugPrivilege() {
 	HANDLE hToken = nullptr;
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
-		WuDebug(LogLevel::Error, format(L"OpenProcessToken fail: {}", GetWindowsErrorMsg()));
+		logger.DLog(LogLevel::Error, format(L"OpenProcessToken fail: {}", GetWindowsErrorMsg()));
 		return false;
 	}
 
 	LUID luid{};
 	if (!LookupPrivilegeValueW(nullptr, SE_DEBUG_NAME, &luid)) {
-		WuDebug(LogLevel::Error, format(L"LookupPrivilegeValueW fail: {}", GetWindowsErrorMsg()));
+		logger.DLog(LogLevel::Error, format(L"LookupPrivilegeValueW fail: {}", GetWindowsErrorMsg()));
 		CloseHandle(hToken);
 		return false;
 	}
@@ -98,7 +102,7 @@ bool WinUtils::EnableDebugPrivilege() {
 
 	bool ret = AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), nullptr, nullptr);
 	if (!ret || GetLastError() == ERROR_NOT_ALL_ASSIGNED) {
-		WuDebug(LogLevel::Error, format(L"AdjustTokenPrivileges fail: {}", GetWindowsErrorMsg()));
+		logger.DLog(LogLevel::Error, format(L"AdjustTokenPrivileges fail: {}", GetWindowsErrorMsg()));
 		CloseHandle(hToken);
 		return false;
 	}
@@ -130,15 +134,15 @@ int WinUtils::TerminateProcessesByName(std::wstring_view processName) {
 
 		HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, entry.th32ProcessID);
 		if (!hProcess) {
-			WuDebug(LogLevel::Error, format(L"OpenProcess fail [{}:{}]: {}", processName, entry.th32ProcessID, GetWindowsErrorMsg()));
+			logger.DLog(LogLevel::Error, format(L"OpenProcess fail [{}:{}]: {}", processName, entry.th32ProcessID, GetWindowsErrorMsg()));
 			return true;
 		}
 
 		if (TerminateProcess(hProcess, 0)) {
-			Logger::Inst().Info(format(L"Terminate success [{}:{}]", processName, entry.th32ProcessID));
+			logger.DLog(LogLevel::Info, format(L"Terminate success [{}:{}]", processName, entry.th32ProcessID));
 			closedCount++;
 		}
-		else WuDebug(LogLevel::Error, format(L"Terminate fail [{}:{}]: {}", processName, entry.th32ProcessID, GetWindowsErrorMsg()));
+		else logger.DLog(LogLevel::Error, format(L"Terminate fail [{}:{}]: {}", processName, entry.th32ProcessID, GetWindowsErrorMsg()));
 		CloseHandle(hProcess);
 		return true;
 		});
@@ -243,18 +247,20 @@ bool WinUtils::RequireAdminPrivilege(bool exit) {
 	return true;
 }
 
-void WinUtils::EnsureSingleInstance(std::wstring title, std::wstring name, std::wstring content) {
+void WinUtils::EnsureSingleInstance(std::wstring title, std::wstring name, std::wstring content, std::wstring extraInfo) {
 	if (name.empty()) name = GetCurrentProcessName();
-	if (title.empty()) title = L"提示 - " + name;
-	if (content.empty()) content = L"程序已在运行中！\n点击“确定”关闭已有实例，点击“取消”退出本次运行。";
-
-	wstring mutexName = L"WinUtils_SingleInstance_" + name;
+	if (title.empty()) title = L"Prompt - " + name;
+	if (content.empty()) content = L"The program is already running!\nClick OK to close the existing instance, click Cancel to exit this run.";
+	MD5 md5;
+	string md5Str = WideStringToUtf8(L"WinUtils_SingleInstance_" + name + extraInfo);
+	md5.add(md5Str.c_str(),md5Str.length());
+	wstring mutexName = AnsiToWideString(md5.getHash().substr(0,16).c_str());
 	HANDLE hMutex = CreateMutexW(nullptr, TRUE, mutexName.c_str());
 
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
 		int ret = MessageBoxW(nullptr, content.c_str(), title.c_str(), MB_OKCANCEL | MB_ICONWARNING);
 		if (ret == IDOK) TerminateProcessesByName(name);
-		if(hMutex)ReleaseMutex(hMutex);
+		if (hMutex)ReleaseMutex(hMutex);
 		ExitProcess(0);
 	}
 }
@@ -283,7 +289,7 @@ std::wstring WinUtils::GetDirFromPath(std::wstring_view path) {
 	return pos == wstring_view::npos ? L"" : wstring(path.substr(0, pos + 1));
 }
 
-// 错误处理
+// Error handling
 std::wstring WinUtils::GetWindowsErrorMsg(DWORD error_code) noexcept
 {
 	wchar_t* error_buf = nullptr;
@@ -303,7 +309,7 @@ std::wstring WinUtils::GetWindowsErrorMsg(DWORD error_code) noexcept
 		error_msg = error_buf;
 		LocalFree(error_buf);
 	}
-	else error_msg = L"未知错误";
+	else error_msg = L"Unknown error";
 	return error_msg;
 }
 
@@ -322,11 +328,11 @@ int WinUtils::MonitorAndTerminateProcesses(HINSTANCE hInstance, const std::vecto
 	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 
 	if (RegisterClassW(&wc) == 0) {
-		WuDebug(LogLevel::Error, format(L"RegisterClassW fail: {}", GetWindowsErrorMsg()));
+		logger.DLog(LogLevel::Error, format(L"RegisterClassW fail: {}", GetWindowsErrorMsg()));
 		return 1;
 	}
 
-	HWND hwnd = CreateWindowExW(0, MONITOR_WND_CLASS, L"进程监控器", 0,
+	HWND hwnd = CreateWindowExW(0, MONITOR_WND_CLASS, L"Process Monitor", 0,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		nullptr, nullptr, hInstance, nullptr);
 	if (!hwnd) {

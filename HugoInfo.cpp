@@ -9,6 +9,7 @@
 using namespace WinUtils;
 using namespace std;
 namespace fs = std::filesystem;
+static Logger logger(L"HugoInfo");
 
 std::optional<std::wstring> HugoInfo::getHugoProtectDriverFolder()
 {
@@ -47,7 +48,7 @@ std::optional<fs::path> HugoInfo::FindSpecificDir(
 		}
 	}
 	catch (const fs::filesystem_error& e) {
-		WLog(LogLevel::Error, format(L"查找目录失败:{}",AnsiToWideString(e.what())));
+		logger.Error(format(L"Failed to find directory:{}",AnsiToWideString(e.what())));
 	}
 
 	return std::nullopt;
@@ -59,7 +60,7 @@ std::optional<std::wstring> HugoInfo::getHugoVersion() {
 
 	auto foundPath = FindSpecificDir(baseDir, prefix);
 	if (!foundPath) {
-		WLog(LogLevel::Warn, format(L"未找到 SeewoService 目录"));
+		logger.Warn(format(L"SeewoService directory not found"));
 		return std::nullopt;
 	}
 
@@ -78,7 +79,7 @@ std::optional<std::wstring> HugoInfo::getHugoFolder() {
 
 	auto foundPath = FindSpecificDir(baseDir, prefix);
 	if (!foundPath) {
-		WLog(LogLevel::Warn, format(L"未找到 SeewoService 目录"));
+		logger.Warn(format(L"SeewoService directory not found"));
 		return std::nullopt;
 	}
 

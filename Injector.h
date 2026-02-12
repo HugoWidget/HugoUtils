@@ -21,8 +21,11 @@ public:
     // 传统远程线程注入DLL
     static bool InjectDLL(DWORD pid, const std::wstring& dllPath);
 
-    // APC注入DLL
-    static bool InjectDLLViaAPC(DWORD pid, const std::wstring& dllPath);
+    // APC注入
+    BOOL InjectDllViaAPC(DWORD pid, const std::wstring & dllPath);
+
+    // 特殊APC注入
+    static bool InjectDLLViaAPC2(DWORD pid, const std::wstring& dllPath);
 
     // 监控指定进程并自动注入DLL
     static void MonitorAndInject(const std::wstring& dllPath, const std::wstring& processName, DWORD checkInterval = 2000);
@@ -40,7 +43,7 @@ public:
     static std::vector<DWORD> InjectToAllProcesses(const std::wstring& processName, const std::wstring& dllPath, const std::vector<DWORD>& excludeProcess = {});
 
 private:
-
+    static std::vector<DWORD> GetAllThreadIdByProcessId(DWORD pid);
     static HANDLE CreateProcessSnapshot();
     static HANDLE CreateThreadSnapshot();
 };

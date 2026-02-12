@@ -1,4 +1,4 @@
-#include "StrConvert.h"
+ï»¿#include "StrConvert.h"
 #include <windows.h>
 #include <vector>
 #include <string>
@@ -6,6 +6,26 @@
 #include "Logger.h"
 using namespace std;
 using namespace WinUtils;
+static Logger logger(L"StrConvert");
+
+std::string WinUtils::WideStringToUtf8(const std::wstring_view wide_str) noexcept
+{
+    if (wide_str.empty()) return {};
+
+    int buffer_size = WideCharToMultiByte(CP_UTF8, 0, wide_str.data(), (int)wide_str.length(),
+        nullptr, 0, nullptr, nullptr);
+    if (buffer_size <= 0)
+    {
+        logger.DLog(LogLevel::Error, std::format(L"WideStringToUtf8: Failed to calculate length - {}", GetWindowsErrorMsg(GetLastError())));
+        return {};
+    }
+
+    std::string utf8_str;
+    utf8_str.resize(buffer_size);
+    WideCharToMultiByte(CP_UTF8, 0, wide_str.data(), (int)wide_str.length(),
+        utf8_str.data(), buffer_size, nullptr, nullptr);
+    return utf8_str;
+}
 
 std::wstring WinUtils::MultiByteToWide(const char* mb_str, UINT code_page) noexcept
 {
@@ -14,12 +34,12 @@ std::wstring WinUtils::MultiByteToWide(const char* mb_str, UINT code_page) noexc
         return {};
     }
 
-    // ¼ÆËãËùÐè³¤¶È
+    // Calculate required buffer length
     const int len = MultiByteToWideChar(code_page, 0, mb_str, -1, nullptr, 0);
     if (len == 0)
     {
         const DWORD err = GetLastError();
-        WuDebug(LogLevel::Error, format(L"MultiByteToWide¼ÆËã³¤¶ÈÊ§°Ü[±àÂëÒ³:{}] - {}", code_page, GetWindowsErrorMsg(err)));
+        logger.DLog(LogLevel::Error, format(L"MultiByteToWide: Failed to calculate length [Code Page:{}] - {}", code_page, GetWindowsErrorMsg(err)));
         return {};
     }
 
@@ -28,42 +48,42 @@ std::wstring WinUtils::MultiByteToWide(const char* mb_str, UINT code_page) noexc
     if (res == 0)
     {
         const DWORD err = GetLastError();
-        WuDebug(LogLevel::Error, format(L"MultiByteToWide×ª»»Ê§°Ü[±àÂëÒ³:{}] - {}", code_page, GetWindowsErrorMsg(err)));
+        logger.DLog(LogLevel::Error, format(L"MultiByteToWide: Conversion failed [Code Page:{}] - {}", code_page, GetWindowsErrorMsg(err)));
         return {};
     }
 
     return wstring(wide_buf.data());
 }
 
-// ANSI(char*) ×ª ¿í×Ö·û´®(wstring/Unicode)
+// Convert ANSI (char*) to wide string (wstring/Unicode)
 std::wstring WinUtils::AnsiToWideString(const char* ansi_str) noexcept
 {
     return MultiByteToWide(ansi_str, CP_ACP);
 }
 
-// UTF8(char*) ×ª ¿í×Ö·û´®(wstring/Unicode)
+// Convert UTF-8 (char*) to wide string (wstring/Unicode)
 std::wstring WinUtils::Utf8ToWideString(const char* utf8_str) noexcept
 {
     return MultiByteToWide(utf8_str, CP_UTF8);
 }
 
-// ¿í×Ö·û´®(wstring/Unicode) ×ª ANSI(char*)
-[[nodiscard]] char* WinUtils::WideStringToAnsi(const std::wstring& wide_str) noexcept
+// Convert wide string (wstring/Unicode) to ANSI (char*)
+[[nodiscard]] char* WinUtils::WideStringToAnsi(const std::wstring_view wide_str) noexcept
 {
     if (wide_str.empty())return nullptr;
 
-    const int len = WideCharToMultiByte(CP_ACP, 0, wide_str.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    const int len = WideCharToMultiByte(CP_ACP, 0, wide_str.data(), -1, nullptr, 0, nullptr, nullptr);
     if (len == 0)
     {
-        WuDebug(LogLevel::Error, format(L"WideStringToAnsi¼ÆËã³¤¶ÈÊ§°Ü - {}", GetWindowsErrorMsg(GetLastError())));
+        logger.DLog(LogLevel::Error, format(L"WideStringToAnsi: Failed to calculate length - {}", GetWindowsErrorMsg(GetLastError())));
         return nullptr;
     }
 
     char* ansi_buf = new char[static_cast<size_t>(len)];
-    const int res = WideCharToMultiByte(CP_ACP, 0, wide_str.c_str(), -1, ansi_buf, len, nullptr, nullptr);
+    const int res = WideCharToMultiByte(CP_ACP, 0, wide_str.data(), -1, ansi_buf, len, nullptr, nullptr);
     if (res == 0)
     {
-        WuDebug(LogLevel::Error, format(L"WideStringToAnsi×ª»»Ê§°Ü - {}", GetWindowsErrorMsg(GetLastError())));
+        logger.DLog(LogLevel::Error, format(L"WideStringToAnsi: Conversion failed - {}", GetWindowsErrorMsg(GetLastError())));
         delete[] ansi_buf;
         return nullptr;
     }
@@ -71,24 +91,23 @@ std::wstring WinUtils::Utf8ToWideString(const char* utf8_str) noexcept
     return ansi_buf;
 }
 
-// UTF8±àÂëµÄ¿í×Ö·û´®(wstring) ×ª ±ê×¼Unicode¿í×Ö·û´®(wstring)
-std::wstring WinUtils::Utf8WideStringToWideString(const std::wstring& utf8_wide_str) noexcept
+// Convert UTF-8 encoded wide string (wstring) to standard Unicode wide string (wstring)
+std::wstring WinUtils::Utf8WideStringToWideString(const std::wstring_view utf8_wide_str) noexcept
 {
     if (utf8_wide_str.empty())return {};
-    
 
-    const int ansi_len = WideCharToMultiByte(CP_ACP, 0, utf8_wide_str.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    const int ansi_len = WideCharToMultiByte(CP_ACP, 0, utf8_wide_str.data(), -1, nullptr, 0, nullptr, nullptr);
     if (ansi_len == 0)
     {
-        WuDebug(LogLevel::Error, format(L"Utf8WideStringToWideString: ¼ÆËãANSI³¤¶ÈÊ§°Ü - {}", GetWindowsErrorMsg(GetLastError())));
+        logger.DLog(LogLevel::Error, format(L"Utf8WideStringToWideString: Failed to calculate ANSI length - {}", GetWindowsErrorMsg(GetLastError())));
         return {};
     }
 
     vector<char> ansi_buf(static_cast<size_t>(ansi_len));
-    const int convert_ansi = WideCharToMultiByte(CP_ACP, 0, utf8_wide_str.c_str(), -1, ansi_buf.data(), ansi_len, nullptr, nullptr);
+    const int convert_ansi = WideCharToMultiByte(CP_ACP, 0, utf8_wide_str.data(), -1, ansi_buf.data(), ansi_len, nullptr, nullptr);
     if (convert_ansi == 0)
     {
-        WuDebug(LogLevel::Error, format(L"Utf8WideStringToWideString: ×ª»»ANSIÊ§°Ü - {}", GetWindowsErrorMsg(GetLastError())));
+        logger.DLog(LogLevel::Error, format(L"Utf8WideStringToWideString: ANSI conversion failed - {}", GetWindowsErrorMsg(GetLastError())));
         return {};
     }
 

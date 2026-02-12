@@ -78,7 +78,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -96,7 +96,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -112,7 +112,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -130,7 +130,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -143,12 +143,28 @@
     <ClInclude Include="Console.h" />
     <ClInclude Include="ConsoleMenu.h" />
     <ClInclude Include="GPL3.h" />
+    <ClInclude Include="hashlib\crc32.h" />
+    <ClInclude Include="hashlib\hash.h" />
+    <ClInclude Include="hashlib\hmac.h" />
+    <ClInclude Include="hashlib\keccak.h" />
+    <ClInclude Include="hashlib\md5.h" />
+    <ClInclude Include="hashlib\sha1.h" />
+    <ClInclude Include="hashlib\sha256.h" />
+    <ClInclude Include="hashlib\sha3.h" />
     <ClInclude Include="HttpConnect.h" />
+    <ClInclude Include="httplib\httplib.h" />
     <ClInclude Include="HugoArt.h" />
+    <ClInclude Include="HugoFreezeApi.h" />
+    <ClInclude Include="HugoFreezeDriver.h" />
+    <ClInclude Include="HugoFreezeInterface.h" />
     <ClInclude Include="HugoInfo.h" />
+    <ClInclude Include="HugoMount.h" />
     <ClInclude Include="HugoUtils.h" />
     <ClInclude Include="Injector.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="md5.h" />
+    <ClInclude Include="Regedit.h" />
+    <ClInclude Include="sha256.h" />
     <ClInclude Include="StrConvert.h" />
     <ClInclude Include="WinSvcMgr.h" />
     <ClInclude Include="WinUtils.h" />
@@ -159,12 +175,26 @@
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="ConsoleMenu.cpp" />
     <ClCompile Include="GPL3.cpp" />
+    <ClCompile Include="hashlib\crc32.cpp" />
+    <ClCompile Include="hashlib\digest.cpp" />
+    <ClCompile Include="hashlib\keccak.cpp" />
+    <ClCompile Include="hashlib\md5.cpp" />
+    <ClCompile Include="hashlib\sha1.cpp" />
+    <ClCompile Include="hashlib\sha256.cpp" />
+    <ClCompile Include="hashlib\sha3.cpp" />
     <ClCompile Include="HttpConnect.cpp" />
     <ClCompile Include="HugoArt.cpp" />
+    <ClCompile Include="HugoFreezeApi.cpp" />
+    <ClCompile Include="HugoFreezeDriver.cpp" />
+    <ClCompile Include="HugoFreezeInterface.cpp" />
     <ClCompile Include="HugoInfo.cpp" />
+    <ClCompile Include="HugoMount.cpp" />
     <ClCompile Include="HugoUtils.cpp" />
     <ClCompile Include="Injector.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="md52.cpp" />
+    <ClCompile Include="Regedit.cpp" />
+    <ClCompile Include="sha2562.cpp" />
     <ClCompile Include="StrConvert.cpp" />
     <ClCompile Include="WinSvcMgr.cpp" />
     <ClCompile Include="WinUtils.cpp" />

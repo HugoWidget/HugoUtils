@@ -1,99 +1,142 @@
-#pragma once
+ï»¿#pragma once
+#include "WinUtilsDef.h"
 #include <Windows.h>
-#include <string>
-#include <vector>
+#include <format>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <string_view>
-#include <chrono>
-#include "WinUtilsDef.h"
+#include <vector>
+#include <optional>
+#include <functional>
+#include <set>
 
 namespace WinUtils {
-	enum class LogLevel : uint8_t {
-		Debug = 0,
-		Info = 1,
-		Warn = 2,
-		Error = 3
-	};
-	enum class LogFormat {
-		Time = 0,
-		Level =1
-	};
+	using LoggerInitProc = void(Logger& logger);
+	inline const wchar_t* DftLogger = L"Default";
+	enum class LogLevel : uint8_t { Debug = 0, Info = 1, Warn = 2, Error = 3 };
+	enum class LogFormat { Time = 0, Level = 1 };
 	class LogOutputStrategy {
 	public:
 		virtual ~LogOutputStrategy() = default;
-		virtual void Output(LogLevel level, const std::wstring& formatted_log) noexcept = 0;
+		virtual void Output(LogLevel level,
+			std::wstring_view formatted_log) noexcept = 0;
 	};
 
 	class FileLogStrategy : public LogOutputStrategy {
 	public:
 		explicit FileLogStrategy(std::wstring_view log_path);
-		void Output(LogLevel level, const std::wstring& formatted_log) noexcept override;
+		void Output(LogLevel level,
+			const std::wstring_view formatted_log) noexcept override;
+
 	private:
-		std::wstring log_path_;
-		std::mutex file_mutex_; // ÎÄ¼þÐ´Èë¶ÀÁ¢Ëø
+		std::wstring m_logPath;
+		std::mutex m_fileMutex;
 	};
 
 	class ConsoleLogStrategy : public LogOutputStrategy {
 	public:
 		ConsoleLogStrategy();
-		void Output(LogLevel level, const std::wstring& formatted_log) noexcept override;
+		void Output(LogLevel level,
+			const std::wstring_view formatted_log) noexcept override;
+
 	private:
-		bool console_inited_ = false;
+		bool m_isConsoleInitialized = false;
 	};
 
 	class DebugLogStrategy : public LogOutputStrategy {
 	public:
-		void Output(LogLevel level, const std::wstring& formatted_log) noexcept override;
+		void Output(LogLevel level,
+			const std::wstring_view formatted_log) noexcept override;
 	};
 
+	class LoggerCore {
+	public:
+		static LoggerCore& Inst() noexcept;
+		LoggerCore(const LoggerCore&) = delete;
+		LoggerCore(LoggerCore&&) = delete;
+		LoggerCore& operator=(const LoggerCore&) = delete;
+		LoggerCore& operator=(LoggerCore&&) = delete;
+
+		void Log(LogLevel level, std::wstring_view msg, std::wstring_view apartment = L"") noexcept;
+
+		template<class Strategy, class... Args>
+		void AddStrategy(Args&& ...) noexcept;
+		void ClearStrategies() noexcept;
+		void SetDefaultStrategies(std::wstring_view log_path = L"") noexcept;
+
+		void EnableAllApartments() noexcept;
+		void DisableAllApartments() noexcept;
+		void EnableApartment(std::wstring_view apartment);
+		void DisableApartment(std::wstring_view apartment);
+		const Logger& GetDefaultLogger();
+		const std::optional<std::reference_wrapper<Logger>> GetLogger(std::wstring_view apartment);
+
+	private:
+		friend Logger;
+		void AddLogger(Logger& logger);
+		void DeleteLogger(std::wstring_view apartment);
+
+	private:
+		LoggerCore();
+		~LoggerCore();
+
+		std::set<std::unique_ptr<LogOutputStrategy>> m_strategies;
+		std::mutex m_loggerMutex;
+		std::set<std::wstring> m_enabledApartments;
+		std::set<Logger*> m_loggers;
+	};
+	template<class Strategy, class ...Args>
+	void LoggerCore::AddStrategy(Args && ... args) noexcept
+	{
+		static_assert(std::is_base_of_v<LogOutputStrategy, Strategy>,
+			"Strategy must inherit from LogOutputStrategy!");
+		m_strategies.insert(
+			std::make_unique<Strategy>(std::forward<Args>(args)...)
+		);
+	}
 	class Logger {
 	public:
-		static Logger& Inst() noexcept {
-			static Logger instance;
-			return instance;
-		}
+		explicit Logger(
+			std::wstring_view apartment, LoggerInitProc proc = [](Logger&) {});
+		~Logger();
 
-		Logger(const Logger&) = delete;
-		Logger(Logger&&) = delete;
-		Logger& operator=(const Logger&) = delete;
-		Logger& operator=(Logger&&) = delete;
-		
+		std::wstring_view GetApartment() const noexcept { return m_apartment; }
 		void AddFormat(LogFormat format);
 		void ClearFormat();
-		bool HasFormat(LogFormat format);
-		void AddStrategy(std::unique_ptr<LogOutputStrategy> strategy) noexcept;
-		void ClearStrategies() noexcept;
-
-		void Log(LogLevel level, std::wstring_view msg) noexcept;
+		bool HasFormat(LogFormat format) const;
 		void Debug(std::wstring_view msg) noexcept { Log(LogLevel::Debug, msg); }
 		void Info(std::wstring_view msg) noexcept { Log(LogLevel::Info, msg); }
 		void Warn(std::wstring_view msg) noexcept { Log(LogLevel::Warn, msg); }
 		void Error(std::wstring_view msg) noexcept { Log(LogLevel::Error, msg); }
-
-		void SetDefaultStrategies(std::wstring_view log_path = L"") noexcept;
+		void Log(LogLevel level, std::wstring_view msg)const noexcept;
+		void DLog(LogLevel level, std::wstring_view msg)const noexcept {
+#if WINUTILS_DEBUG
+			Log(level, msg);
+#endif
+		};
 
 	private:
-		Logger() = default;
-		~Logger() = default;
-
-		std::wstring FormatLog(LogLevel level, std::wstring_view msg) noexcept;
-		std::wstring GetFormattedTime() noexcept;
-
-		std::vector<std::unique_ptr<LogOutputStrategy>> m_strategies;
-		std::mutex m_loggerMutex;
+		std::wstring FormatLog(LogLevel level, std::wstring_view msg)const noexcept;
+		std::wstring GetFormattedTime() const noexcept;
+		std::wstring_view m_apartment;
 		std::vector<LogFormat> m_format;
 	};
-	inline void WLog(LogLevel level, int file, int line) noexcept { WinUtils::Logger::Inst().Log(level, std::format(L"{}@{}", file, line)); };
-	inline void WLog(LogLevel level, std::wstring_view msg) noexcept { WinUtils::Logger::Inst().Log(level, msg); };
+	inline void WLog(LogLevel level, int file, int line) noexcept {
+		WinUtils::LoggerCore::Inst().GetDefaultLogger().Log(
+			level, std::format(L"{}@{}", file, line));
+	};
+	inline void WLog(LogLevel level, std::wstring_view msg) noexcept {
+		WinUtils::LoggerCore::Inst().GetDefaultLogger().Log(level, msg);
+	};
 	inline void WuDebug(LogLevel level, std::wstring_view msg) noexcept {
 #if WINUTILS_DEBUG
-		WinUtils::Logger::Inst().Log(level, msg);
+		WinUtils::LoggerCore::Inst().GetDefaultLogger().Log(level, msg);
 #endif
 	};
-}
-#define WLOG_DEBUG(FILE,LINE) WLog(WinUtils::LogLevel::Debug,FILE,LINE);
-#define WLOG_INFO(FILE,LINE) WLog(WinUtils::LogLevel::Info,FILE,LINE);
-#define WLOG_WARN(FILE,LINE) WLog(WinUtils::LogLevel::Warn,FILE,LINE);
-#define WLOG_ERROR(FILE,LINE) WLog(WinUtils::LogLevel::Error,FILE,LINE);
-#define WLOG(LEVEL) WLOG_##LEVEL(__FILE__,__LINE__)
+} // namespace WinUtils
+#define WLOG_DEBUG(FILE, LINE) WLog(WinUtils::LogLevel::Debug, FILE, LINE);
+#define WLOG_INFO(FILE, LINE) WLog(WinUtils::LogLevel::Info, FILE, LINE);
+#define WLOG_WARN(FILE, LINE) WLog(WinUtils::LogLevel::Warn, FILE, LINE);
+#define WLOG_ERROR(FILE, LINE) WLog(WinUtils::LogLevel::Error, FILE, LINE);
+#define WLOG(LEVEL) WLOG_##LEVEL(__FILE__, __LINE__)

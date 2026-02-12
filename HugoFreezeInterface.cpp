@@ -1,0 +1,38 @@
+#include "HugoFreezeInterface.h"
+using namespace std;
+uint32_t CalculateVolumeMask(const wstring& driveLetters)noexcept {
+    uint32_t mask = 0;
+    for (wchar_t c : driveLetters) {
+        wchar_t upperC = static_cast<wchar_t>(toupper(static_cast<wint_t>(c)));
+        if (upperC < L'A' || upperC > L'Z')  return -1;
+        int offset = upperC - L'A';
+        if (offset >= 32)return -1;
+        mask |= (1 << offset);
+    }
+    return mask;
+}
+
+FreezeResult::FreezeResult(FreezeOperationResult res, const wstring& message, const wstring& errorMessage, const vector<DiskInfo> diskInfos, const wstring& time)
+    : result(res), msg(message), errMsg(errorMessage), diskInfos(diskInfos), operateTime(time)  {
+}
+
+FreezeResult& FreezeResult::setResult(FreezeOperationResult res) {
+    this->result = res;
+    return *this;
+}
+FreezeResult& FreezeResult::setMsg(const wstring& message) {
+    this->msg = message;
+    return *this;
+}
+FreezeResult& FreezeResult::setErrMsg(const wstring& errorMessage) {
+    this->errMsg = errorMessage;
+    return *this;
+}
+FreezeResult& FreezeResult::setDiskInfos(const vector<DiskInfo>& diskInfos) {
+    this->diskInfos = diskInfos;
+    return *this;
+}
+FreezeResult& FreezeResult::setOperateTime(const wstring& time) {
+    this->operateTime = time;
+    return *this;
+}

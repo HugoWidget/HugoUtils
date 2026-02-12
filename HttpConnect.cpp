@@ -6,12 +6,13 @@
 #pragma comment(lib,"ws2_32.lib")
 using namespace WinUtils;
 using namespace std;
+static Logger logger(L"HttpConnect");
 
 HttpConnect::HttpConnect()
 {
 	WSADATA wsa = { 0 };
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-		WuDebug(LogLevel::Error, format(L"WSAStartup failed! Error: {}\n", WSAGetLastError()));
+		logger.DLog(LogLevel::Error, format(L"WSAStartup failed! Error: {}\n", WSAGetLastError()));
 	}
 }
 
@@ -25,7 +26,7 @@ void HttpConnect::setPort(short port)
 	this->port = port;
 }
 
-std::wstring HttpConnect::socketHttp(std::wstring host, std::wstring request)
+std::wstring HttpConnect::socketHttp(std::wstring host, std::wstring request)const
 {
 	SOCKET sockfd = -1;
 	ADDRINFOW hints, * servinfo = nullptr, * p = nullptr;
@@ -35,17 +36,17 @@ std::wstring HttpConnect::socketHttp(std::wstring host, std::wstring request)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	if ((rv = GetAddrInfo(host.c_str(), to_wstring(port).c_str(), &hints, &servinfo)) != 0) {
-		WuDebug(LogLevel::Error, format(L"GetAddrInfo failed! Error:{} ", gai_strerrorW(rv)));
+		logger.DLog(LogLevel::Error, format(L"GetAddrInfo failed! Error:{} ", gai_strerrorW(rv)));
 		return L"";
 	}
 	for (p = servinfo; p != nullptr; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-			WuDebug(LogLevel::Error, format(L"socket create failed! Error: {}", WSAGetLastError()));
+			logger.DLog(LogLevel::Error, format(L"socket create failed! Error: {}", WSAGetLastError()));
 			continue;
 		}
 		if (connect(sockfd, p->ai_addr, (int)p->ai_addrlen) == -1) {
 			closesocket(sockfd);
-			WuDebug(LogLevel::Error, format(L"connection error! Error:{} ", WSAGetLastError()));
+			logger.DLog(LogLevel::Error, format(L"connection error! Error:{} ", WSAGetLastError()));
 			continue;
 		}
 
@@ -54,17 +55,16 @@ std::wstring HttpConnect::socketHttp(std::wstring host, std::wstring request)
 
 	FreeAddrInfo(servinfo);
 	if (p == nullptr) {
-		WuDebug(LogLevel::Error, format(L"Failed to connect to {}:{}", host, port));
+		logger.DLog(LogLevel::Error, format(L"Failed to connect to {}:{}", host, port));
 		return L"";
 	}
 
-	// 发送HTTP请求
-	WuDebug(LogLevel::Error, format(L"{}", request.c_str()));
+	logger.DLog(LogLevel::Error, format(L"{}", request.c_str()));
 	char* ansi_request = WideStringToAnsi(request);
 	send(sockfd, ansi_request, (int)request.length(), 0);
 	delete ansi_request;
 	ansi_request = 0;
-	// 接收响应
+	
 	char buf[4096] = { 0 };
 	int offset = 0;
 	int rc;
@@ -73,7 +73,7 @@ std::wstring HttpConnect::socketHttp(std::wstring host, std::wstring request)
 	{
 		offset += rc;
 		if (offset >= sizeof(buf) - 1) {
-			WuDebug(LogLevel::Error, L"Response buffer full, truncating data");
+			logger.DLog(LogLevel::Error, L"Response buffer full, truncating data");
 			break;
 		}
 	}
@@ -83,7 +83,7 @@ std::wstring HttpConnect::socketHttp(std::wstring host, std::wstring request)
 	return AnsiToWideString(buf);
 }
 
-std::wstring HttpConnect::postData(std::wstring host, std::wstring path, std::wstring post_content)
+std::wstring HttpConnect::postData(std::wstring host, std::wstring path, std::wstring post_content)const
 {
 	wstringstream stream;
 	stream << L"POST " << path;
@@ -98,7 +98,7 @@ std::wstring HttpConnect::postData(std::wstring host, std::wstring path, std::ws
 	return socketHttp(host, stream.str());
 }
 
-std::wstring HttpConnect::getData(std::wstring host, std::wstring path, std::wstring get_content)
+std::wstring HttpConnect::getData(std::wstring host, std::wstring path, std::wstring get_content)const
 {
 	wstringstream stream;
 	stream << L"GET " << path << (get_content.length() ? L"?" : L"") << get_content;

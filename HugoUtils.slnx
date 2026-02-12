@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="HugoUtils.vcxproj" Id="351bb40b-1e2f-42b9-9145-d4079e5efc93" />
+</Solution>

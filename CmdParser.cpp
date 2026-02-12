@@ -1,25 +1,58 @@
 #include "Logger.h"
 #include "CmdParser.h"
+#include <vector>
+#include <string>
+#include <ranges>
+#include <cctype>
 using namespace WinUtils;
 using namespace std;
-// 解析命令行
-bool CmdParser::parse(std::wstring_view commandLine) {
+static Logger logger(L"CmdParser");
+
+std::vector<std::wstring> wstring_split_whitespace(const std::wstring& input)
+{
+    namespace ranges = std::ranges;
+    namespace views = std::views;
+    auto token_views = input
+        | views::split(L' ')                    
+        | views::transform([](auto&& r) {       
+        return std::wstring(ranges::begin(r), ranges::end(r));
+            })
+        | views::filter([](const std::wstring& s) {  
+        return !s.empty();
+            });
+    return std::vector<std::wstring>(ranges::begin(token_views), ranges::end(token_views));
+}
+
+bool CmdParser::parse(std::wstring_view commandLine, ParseMode mode) {
     clear();
+    if (mode == ParseMode::None) {
+        size_t found = commandLine.find(L"\\-");
+        size_t len = commandLine.length();
+        if (found == wstring::npos)
+            mode = ParseMode::NoFlag;
+        else
+            mode = ParseMode::Normal;
+    }
+    if (mode == ParseMode::NoFlag) {
+        wstring cmd = wstring(commandLine);
+        m_commands.insert({ L"", wstring_split_whitespace(cmd) });
+        return true;
+    }
     m_parseSuccess = false;
 
     if (!isQuotationMatched(commandLine)) {
-        WuDebug(LogLevel::Error, L"CmdParser:无法匹配的括号");
+        logger.DLog(LogLevel::Error, L"CmdParser: Unmatched quotation marks");
         return false;
     }
 
-    // 分词处理
+    // Tokenize the input command line
     vector<wstring> tokens = tokenize(commandLine);
     if (tokens.empty()) {
         m_parseSuccess = true;
         return true;
     }
 
-    // 解析命令-参数映射
+    // Parse command-parameter mappings
     wstring currentCmd;
     for (const auto& token : tokens) {
         if (isCommand(token)) {
@@ -35,20 +68,20 @@ bool CmdParser::parse(std::wstring_view commandLine) {
     return true;
 }
 
-// 检查是否包含指定命令
+// Check if the specified command exists
 bool CmdParser::hasCommand(std::wstring_view cmd) const {
     if (cmd.empty() || !isCommand(cmd)) return false;
     return m_commands.find(normalizeCommand(cmd)) != m_commands.end();
 }
 
-// 获取指定命令的参数数量
+// Get the number of parameters for the specified command
 size_t CmdParser::getParamCount(std::wstring_view cmd) const noexcept {
     auto normalizedCmd = normalizeCommand(cmd);
     auto it = m_commands.find(normalizedCmd);
     return (it != m_commands.end()) ? it->second.size() : 0;
 }
 
-// 安全获取指定索引的参数
+// Safely get the parameter at the specified index
 optional<wstring> CmdParser::getParam(
     std::wstring_view cmd, size_t index) const noexcept {
     auto normalizedCmd = normalizeCommand(cmd);
@@ -59,7 +92,18 @@ optional<wstring> CmdParser::getParam(
     return it->second[index];
 }
 
-// 获取所有命令名
+// Safely get all parameters for the specified command
+vector<wstring> CmdParser::getParams(
+    std::wstring_view cmd) const noexcept {
+    auto normalizedCmd = normalizeCommand(cmd);
+    auto it = m_commands.find(normalizedCmd);
+    if (it == m_commands.end()) {
+        return {};
+    }
+    return it->second;
+}
+
+// Get all command names
 vector<wstring> CmdParser::getAllCommands() const {
     vector<wstring> cmds;
     cmds.reserve(m_commands.size());
@@ -69,20 +113,20 @@ vector<wstring> CmdParser::getAllCommands() const {
     return cmds;
 }
 
-// 检查token是否有效
+// Check if a token is valid
 bool CmdParser::isTokenValid(std::wstring_view token) noexcept {
     if (hasQuotation(token)) return true;
     return token.find(L' ') == wstring_view::npos;
 }
 
-// 检查是否包含配对的引号
+// Check if the token is wrapped with paired quotation marks
 bool CmdParser::hasQuotation(std::wstring_view token) noexcept {
     return token.size() >= 2
         && token.front() == L'"'
         && token.back() == L'"';
 }
 
-// 移除token两端的引号
+// Remove quotation marks from both ends of the token
 wstring CmdParser::removeQuotation(std::wstring_view token) noexcept {
     if (!hasQuotation(token)) {
         return wstring(token);
@@ -90,7 +134,7 @@ wstring CmdParser::removeQuotation(std::wstring_view token) noexcept {
     return wstring(token.substr(1, token.size() - 2));
 }
 
-// 检查命令行引号是否配对
+// Check if all quotation marks in the command line are matched
 bool CmdParser::isQuotationMatched(std::wstring_view input) noexcept {
     bool inQuotes = false;
     for (wchar_t c : input) {
@@ -101,12 +145,12 @@ bool CmdParser::isQuotationMatched(std::wstring_view input) noexcept {
     return !inQuotes;
 }
 
-// 判断是否是命令
+// Determine if the token is a valid command
 bool CmdParser::isCommand(std::wstring_view token) const noexcept {
     return token.size() > 1 && token.front() == L'-';
 }
 
-// 分词核心逻辑
+// Core tokenization logic for command line
 vector<wstring> CmdParser::tokenize(std::wstring_view input) {
     vector<wstring> tokens;
     wstring currentToken;
@@ -115,7 +159,7 @@ vector<wstring> CmdParser::tokenize(std::wstring_view input) {
     for (wchar_t c : input) {
         if (c == L'"') {
             inQuotes = !inQuotes;
-            currentToken += c; // 保留引号
+            currentToken += c; // Preserve quotation marks
         }
         else if (isspace(static_cast<wint_t>(c)) && !inQuotes) {
             if (!currentToken.empty()) {
@@ -128,7 +172,7 @@ vector<wstring> CmdParser::tokenize(std::wstring_view input) {
         }
     }
 
-    // 处理最后一个token
+    // Process the last remaining token
     if (!currentToken.empty()) {
         tokens.push_back(move(currentToken));
     }
@@ -136,7 +180,7 @@ vector<wstring> CmdParser::tokenize(std::wstring_view input) {
     return tokens;
 }
 
-// 标准化命令名
+// Normalize the command name (case-insensitive if enabled)
 wstring CmdParser::normalizeCommand(std::wstring_view cmd) const noexcept {
     if (!m_caseInsensitive) {
         return wstring(cmd);

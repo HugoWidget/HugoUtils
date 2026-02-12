@@ -26,8 +26,8 @@ int GetConsoleScreenRows() {
 void ShowLicense(const wchar_t* licensePath) {
 	std::wifstream licenseFile(licensePath);
 	if (!licenseFile.is_open()) {
-		std::wcerr << L"错误：无法打开许可证文件 [" << licensePath << L"]\n";
-		std::wcerr << L"请确认文件路径正确，且程序有读取权限。\n";
+		std::wcerr << L"Error: Failed to open license file [" << licensePath << L"]\n";
+		std::wcerr << L"Please verify the file path is correct and the program has read permissions.\n";
 		return;
 	}
 
@@ -40,12 +40,12 @@ void ShowLicense(const wchar_t* licensePath) {
 		currentRow++;
 
 		if (currentRow >= screenRows) {
-			std::wcout << L"\n-- 按回车继续 (输入 q 退出) -- ";
+			std::wcout << L"\n-- Press Enter to continue (enter q to quit) -- ";
 			std::wstring input;
 			std::getline(std::wcin, input);
 
 			if (input == L"q" || input == L"Q") {
-				std::wcout << L"\n已退出许可证文本显示\n";
+				std::wcout << L"\nExited license text display\n";
 				licenseFile.close();
 				return;
 			}

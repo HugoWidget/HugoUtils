@@ -12,6 +12,7 @@ public:
 	bool isOwnConsole();
 	void setLocale();
 	bool setVisible(bool visible);
+	bool setVirtualConsole(bool enable);
 private:
 	void redirect();
 	bool hasConsole = false;

@@ -54,7 +54,19 @@ bool Console::setVisible(bool visible)
 	HWND consoleWnd = GetConsoleWindow();
 	return (bool)SetWindowPos(consoleWnd, 0, 0, 0, 0, 0, (visible ? SWP_SHOWWINDOW : SWP_HIDEWINDOW) | SWP_NOMOVE | SWP_NOSIZE);
 }
-
+bool Console::setVirtualConsole(bool enable)
+{
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (hOut != INVALID_HANDLE_VALUE) {
+		DWORD mode = 0;
+		if (GetConsoleMode(hOut, &mode)) {
+			if (enable)mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+			else mode &= !ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+			return SetConsoleMode(hOut, mode);
+		}
+	}
+	return false;
+}
 void Console::redirect()
 {
 	freopen_s(&stream, "CON", "r", stdin);
