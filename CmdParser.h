@@ -8,7 +8,7 @@
 #include <string_view>
 #include "WinUtilsDef.h"
 
-using ParserData = std::map<std::wstring, std::vector<std::wstring>>;
+using ParserData = std::map<WinUtils::string_t, std::vector<WinUtils::string_t>>;
 
 class WinUtils::CmdParser {
 public:
@@ -18,52 +18,52 @@ public:
     }
 
     // Parse the command line std::string
-    [[nodiscard]] bool parse(std::wstring_view commandLine, ParseMode mode = ParseMode::Normal);
+    [[nodiscard]] bool parse(string_view_t commandLine, ParseMode mode = ParseMode::Normal);
 
     // Get parsing results (const/non-const overloads)
     [[nodiscard]] const ParserData& result() const noexcept { return m_commands; }
     [[nodiscard]] ParserData& result() noexcept { return m_commands; }
 
     // Check if the specified command exists
-    [[nodiscard]] bool hasCommand(std::wstring_view cmd) const;
+    [[nodiscard]] bool hasCommand(string_view_t cmd) const;
 
     // Get the number of parameters for the specified command
-    [[nodiscard]] size_t getParamCount(std::wstring_view cmd) const noexcept;
+    [[nodiscard]] size_t getParamCount(string_view_t cmd) const noexcept;
 
     // Safely get the parameter at the specified index for the given command
-    [[nodiscard]] std::optional<std::wstring> getParam(
-        std::wstring_view cmd, size_t index) const noexcept;
+    [[nodiscard]] std::optional<string_t> getParam(
+        string_view_t cmd, size_t index) const noexcept;
 
     // Safely get all parameters for the specified command
-    std::vector<std::wstring> getParams(std::wstring_view cmd) const noexcept;
+    std::vector<string_t> getParams(string_view_t cmd) const noexcept;
 
     // Get all parsed command names
-    [[nodiscard]] std::vector<std::wstring> getAllCommands() const;
+    [[nodiscard]] std::vector<string_t> getAllCommands() const;
 
     // Clear all parsing results
     void clear() noexcept { m_commands.clear(); }
 
     // Check if a token is valid
-    [[nodiscard]] static bool isTokenValid(std::wstring_view token) noexcept;
+    [[nodiscard]] static bool isTokenValid(string_view_t token) noexcept;
 
     // Check if the token is wrapped with paired quotation marks
-    [[nodiscard]] static bool hasQuotation(std::wstring_view token) noexcept;
+    [[nodiscard]] static bool hasQuotation(string_view_t token) noexcept;
 
     // Remove quotation marks from both ends of the token
-    [[nodiscard]] static std::wstring removeQuotation(std::wstring_view token) noexcept;
+    [[nodiscard]] static string_t removeQuotation(string_view_t token) noexcept;
 
     // Check if all quotation marks in the command line are matched
-    [[nodiscard]] static bool isQuotationMatched(std::wstring_view input) noexcept;
+    [[nodiscard]] static bool isQuotationMatched(string_view_t input) noexcept;
 
     // Tokenize the input command line std::string into segments
-    [[nodiscard]] std::vector<std::wstring> tokenize(std::wstring_view input);
+    [[nodiscard]] std::vector<string_t> tokenize(string_view_t input);
 
 private:
     // Determine if the token is a valid command identifier
-    [[nodiscard]] bool isCommand(std::wstring_view token) const noexcept;
+    [[nodiscard]] bool isCommand(string_view_t token) const noexcept;
 
     // Normalize command name (case-insensitive if enabled)
-    [[nodiscard]] std::wstring normalizeCommand(std::wstring_view cmd) const noexcept;
+    [[nodiscard]] string_t normalizeCommand(string_view_t cmd) const noexcept;
 
 private:
     ParserData m_commands;                // Storage for parsing results

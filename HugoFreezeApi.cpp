@@ -7,7 +7,6 @@
 using namespace WinUtils;
 using namespace std;
 static Logger logger(L"HugoFreezeApi");
-
 wstring ToUpper(wstring_view str) noexcept {
 	wstring res(str);
 	transform(res.begin(), res.end(), res.begin(), ::towupper);
@@ -69,10 +68,6 @@ void HugoFreezeApi::GetConfig(std::wstring& outIp, uint16_t& outPort) const noex
 	outPort = m_port;
 }
 
-DriverStatusInfo HugoFreezeApi::GetDriverStatus() const noexcept {
-	return DriverStatusInfo{};
-}
-
 FreezeResult HugoFreezeApi::GetFreezeState() const noexcept {
 	const std::wstring path = L"/api/v1/get_disk_data";
 
@@ -87,9 +82,8 @@ FreezeResult HugoFreezeApi::GetFreezeState() const noexcept {
 FreezeResult HugoFreezeApi::TryProtect(const std::wstring& driveLetters) const noexcept {
 	wstring lettersUpper;
 	lettersUpper = ToUpper(driveLetters);
-	if (lettersUpper != L"0" && CalculateVolumeMask(lettersUpper) == -1)
+	if (CalculateVolumeMask(lettersUpper) == -1)
 		return FreezeResult(FrzOR::Failed).setErrMsg(L"Invalid drive letters");
-	if (lettersUpper == L"0")lettersUpper = L"";
 	const std::wstring path = L"/api/v1/excute_protect_try";
 	const std::wstring postBody = std::format(L"{{\"selectedDisks\":[\"{}\"]}}", lettersUpper);
 	logger.DLog(LogLevel::Info, std::format(L"Sending POST request: {}:{}{}, Request Body: {}", DEFAULT_IP, m_port, path, postBody));
@@ -104,7 +98,7 @@ FreezeResult HugoFreezeApi::SetFreezeState(
 	const std::wstring& driveLetters,
 	DriveFreezeState state
 ) noexcept {
-	int vol = driveLetters == L"0" ? 0 : CalculateVolumeMask(driveLetters);
+	int vol = CalculateVolumeMask(driveLetters);
 	if (vol == -1)
 		return FreezeResult(FrzOR::Failed).setErrMsg(L"Invalid drive letters");
 	const std::wstring path = L"/api/v1/set";

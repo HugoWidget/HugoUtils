@@ -29,22 +29,39 @@ struct QueryResult {
 };
 
 // SWFreeze Driver Management Class
-class HugoFreezeDriver {
+class HugoFreezeDriver :public IHugoFreeze {
 public:
 	static HugoFreezeDriver& Instance() noexcept;
+
+	FreezeResult Init() noexcept;
+	void Cleanup() noexcept;
+	bool IsInitialized() const noexcept;
+
+	// Configuration management
+	QueryResult QueryDriverStatus() noexcept;
+
+	// Core functionalities
+	FreezeResult GetFreezeState() const noexcept;
+	FreezeResult TryProtect(const std::wstring& driveLetters) const noexcept;
+	FreezeResult SetFreezeState(
+		const std::wstring& driveLetters,
+		DriveFreezeState state
+	) noexcept;
+
+	virtual std::wstring GetLastErrorMsg() const noexcept;
+	virtual DWORD GetLastErrorCode() const noexcept;
+
+	static std::wstring HexDump(const unsigned char* data, int len)noexcept;
+private:
+	HANDLE OpenDriver();
+	bool ModifyConfig(uint32_t newVol, bool enable) noexcept;
+	HugoFreezeDriver() = default;
+	~HugoFreezeDriver() = default;
 	HugoFreezeDriver(const HugoFreezeDriver&) = delete;
 	HugoFreezeDriver(HugoFreezeDriver&&) = delete;
 	HugoFreezeDriver& operator=(const HugoFreezeDriver&) = delete;
 	HugoFreezeDriver& operator=(HugoFreezeDriver&&) = delete;
-
-	bool FreezeDrives(const std::wstring& driveLetters) noexcept;
-	bool UnfreezeAll() noexcept;
-	QueryResult QueryDriverStatus() noexcept;
-
 private:
-	HugoFreezeDriver() = default;
-	~HugoFreezeDriver() = default;
-
 	static constexpr uint32_t SWF_OFFSET_UINT32_NEXT_MASK = 0x10;
 	static constexpr uint8_t  SWF_OFFSET_UINT8_FLAG1 = 0x2D;
 	static constexpr uint16_t SWF_OFFSET_UINT16_STATUS = 0x31;
@@ -64,6 +81,4 @@ private:
 	static constexpr uint32_t OFF_RT_ACTIVE = 0x114;
 	static constexpr uint32_t OFF_RT_STATS = 0x118;
 
-	bool ModifyConfig(uint32_t newVol, bool enable) noexcept;
-	void HexDump(const unsigned char* data, int len) const noexcept;
 };

@@ -29,28 +29,19 @@ struct DiskInfo {
 
 struct FreezeResult {
 	FreezeResult(FreezeOperationResult res, const std::wstring& message = L"",
-		const std::wstring& errorMessage = L"", const std::vector<DiskInfo> diskInfos = {}, const std::wstring& time = L""); 
+		const DWORD err = ERROR_SUCCESS, const std::wstring& errorMessage = L"", const std::vector<DiskInfo> diskInfos = {}, const std::wstring& time = L"");
 	FreezeResult& setResult(FreezeOperationResult res);
 	FreezeResult& setMsg(const std::wstring& message);
+	FreezeResult& setError(const DWORD error);
 	FreezeResult& setErrMsg(const std::wstring& errorMessage);
 	FreezeResult& setDiskInfos(const std::vector<DiskInfo>& diskInfos);
 	FreezeResult& setOperateTime(const std::wstring& time);
 	FreezeOperationResult result;    // Result of the protect try operation
 	std::wstring msg;                // message
+	DWORD error;                     // error
 	std::wstring errMsg;             // error message
 	std::vector<DiskInfo> diskInfos; // List of disk information
 	std::wstring operateTime;        // Operation time (format: yyyy-MM-dd HH:mm:ss)
-};
-
-struct DriverStatusInfo {
-	bool isDriverOpen;          // Whether the driver is opened successfully
-	DWORD lastError;            // Last error code
-	bool isRuntimeQueryOk;      // Whether runtime state query succeeded
-	uint32_t activeFlag;        // Driver activation flag
-	std::wstring runtimeLog;    // Runtime log
-	bool isBootConfigQueryOk;   // Whether boot configuration query succeeded
-	unsigned char bootConfigBuffer[1024] = { 0 }; // Boot configuration data buffer
-	int bootConfigValidLen = 0; // Valid length of boot configuration data
 };
 
 class IHugoFreeze {
@@ -60,11 +51,6 @@ public:
 	virtual FreezeResult Init() noexcept = 0;
 	virtual void Cleanup() noexcept = 0;
 	virtual bool IsInitialized() const noexcept = 0;
-
-	// Configuration management
-	virtual void SetConfig(const std::wstring& ip, uint16_t port) noexcept = 0;
-	virtual void GetConfig(std::wstring& outIp, uint16_t& outPort) const noexcept = 0;
-	virtual DriverStatusInfo GetDriverStatus() const noexcept = 0;
 
 	// Core functionalities
 	virtual FreezeResult GetFreezeState() const noexcept = 0;
@@ -77,5 +63,5 @@ public:
 	virtual std::wstring GetLastErrorMsg() const noexcept = 0;
 	virtual DWORD GetLastErrorCode() const noexcept = 0;
 };
-
+// return 0 if 'driveLetters' is empty, -1 if 'driveLetters' is invalid
 uint32_t CalculateVolumeMask(const std::wstring& driveLetters)noexcept;

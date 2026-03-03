@@ -12,34 +12,29 @@ HugoFreezeDriver& HugoFreezeDriver::Instance() noexcept {
 	return instance;
 }
 
-bool HugoFreezeDriver::FreezeDrives(const std::wstring& driveLetters) noexcept {
-	uint32_t volMask = CalculateVolumeMask(driveLetters);
-	if (volMask == 0) {
-		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Invalid drive letters: {}", driveLetters));
-		return false;
+FreezeResult HugoFreezeDriver::Init() noexcept {
+	QueryResult result;
+	HANDLE hDevice = OpenDriver();
+	if (hDevice == INVALID_HANDLE_VALUE) {
+		result.lastError = GetLastError();
+		result.driverOpenSuccess = false;
+		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Open driver fail, err: {}", result.lastError));
 	}
-
-	logger.DLog(LogLevel::Info, std::format(L"[HugoFreeze] Freeze drives: {} (mask=0x{:08X})", driveLetters, volMask));
-	return ModifyConfig(volMask, true);
+	CloseHandle(hDevice);
+	return FreezeResult(result.driverOpenSuccess ? FrzOR::Success : FrzOR::InitFailed).setError(result.lastError);
 }
 
-bool HugoFreezeDriver::UnfreezeAll() noexcept {
-	logger.DLog(LogLevel::Info, L"[HugoFreeze] Unfreeze all drives");
-	return ModifyConfig(0, false);
+void HugoFreezeDriver::Cleanup() noexcept {
+	return;
+}
+
+bool HugoFreezeDriver::IsInitialized() const noexcept {
+	return true;
 }
 
 QueryResult HugoFreezeDriver::QueryDriverStatus() noexcept {
 	QueryResult result;
-	HANDLE hDevice = CreateFileW(
-		DRIVER_DEVICE_PATH,
-		GENERIC_READ | GENERIC_WRITE,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		nullptr,
-		OPEN_EXISTING,
-		0,
-		nullptr
-	);
-
+	HANDLE hDevice = OpenDriver();
 	if (hDevice == INVALID_HANDLE_VALUE) {
 		result.lastError = GetLastError();
 		result.driverOpenSuccess = false;
@@ -85,9 +80,31 @@ QueryResult HugoFreezeDriver::QueryDriverStatus() noexcept {
 	return result;
 }
 
+// Core functionalities
+FreezeResult HugoFreezeDriver::GetFreezeState() const noexcept {
+	return FreezeResult(FrzOR::Failed);
+
+}
+FreezeResult HugoFreezeDriver::TryProtect(const std::wstring& driveLetters) const noexcept {
+	return FreezeResult(FrzOR::Failed);
+}
+
+HANDLE HugoFreezeDriver::OpenDriver()
+{
+	HANDLE hDevice = CreateFileW(
+		DRIVER_DEVICE_PATH,
+		GENERIC_READ | GENERIC_WRITE,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		nullptr,
+		OPEN_EXISTING,
+		0,
+		nullptr
+	);
+	return hDevice;
+}
 
 bool HugoFreezeDriver::ModifyConfig(uint32_t newVol, bool enable) noexcept {
-	// 读取配置文件
+	// Read Config
 	std::ifstream configFile(SWF_CONFIG_PATH, std::ios::binary | std::ios::in);
 	if (!configFile.is_open()) {
 		DWORD err = GetLastError();
@@ -104,14 +121,14 @@ bool HugoFreezeDriver::ModifyConfig(uint32_t newVol, bool enable) noexcept {
 	}
 	configFile.close();
 
-	// 修改配置
+	// Modify Config
 	*reinterpret_cast<uint32_t*>(buffer + SWF_OFFSET_UINT32_NEXT_MASK) = newVol;
 	buffer[SWF_OFFSET_UINT8_FLAG1] = 0x02;
 	*reinterpret_cast<uint16_t*>(buffer + SWF_OFFSET_UINT16_STATUS) = enable ? 0x0000 : 0x03E4;
 	buffer[SWF_OFFSET_UINT8_FLAG2] = 0x01;
 	*reinterpret_cast<uint32_t*>(buffer + SWF_OFFSET_UINT32_VOL_MASK_COPY) = newVol;
 
-	// 计算MD5
+	// Calc MD5
 	MD5_CTX ctx;
 	unsigned char digest[MD5_DIGEST_LENGTH] = { 0 };
 	MD5_Init(&ctx);
@@ -122,8 +139,8 @@ bool HugoFreezeDriver::ModifyConfig(uint32_t newVol, bool enable) noexcept {
 	logger.DLog(LogLevel::Debug, L"[HugoFreeze] Config buffer ready");
 	HexDump(buffer, 0x90);
 
-	// 写入驱动
-	HANDLE hDriver = CreateFileW(DRIVER_DEVICE_PATH, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+	// Write to driver
+	HANDLE hDriver = OpenDriver();
 	if (hDriver == INVALID_HANDLE_VALUE) {
 		DWORD err = GetLastError();
 		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Open driver fail, err: {}", err));
@@ -149,7 +166,7 @@ bool HugoFreezeDriver::ModifyConfig(uint32_t newVol, bool enable) noexcept {
 	}
 	CloseHandle(hDriver);
 
-	// 写入配置文件
+	// Write to config file
 	HANDLE hConfigFile = CreateFileW(SWF_CONFIG_PATH, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
 	if (hConfigFile == INVALID_HANDLE_VALUE) {
 		DWORD err = GetLastError();
@@ -169,9 +186,10 @@ bool HugoFreezeDriver::ModifyConfig(uint32_t newVol, bool enable) noexcept {
 	return true;
 }
 
-void HugoFreezeDriver::HexDump(const unsigned char* data, int len) const noexcept {
-	logger.DLog(LogLevel::Debug, L"    Offset | 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
-	logger.DLog(LogLevel::Debug, L"    -------+------------------------------------------------");
+std::wstring HugoFreezeDriver::HexDump(const unsigned char* data, int len)noexcept {
+	std::wstring content;
+	content += L"    Offset | 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F";
+	content += L"    -------+------------------------------------------------";
 
 	for (int i = 0; i < len; i += 16) {
 		std::wstring line = std::format(L"    0x{:04X} | ", i);
@@ -183,6 +201,35 @@ void HugoFreezeDriver::HexDump(const unsigned char* data, int len) const noexcep
 				line += L"   ";
 			}
 		}
-		logger.DLog(LogLevel::Debug, line);
+		content += line;
+		content += L"\n";
 	}
+	return content;
 }
+
+FreezeResult HugoFreezeDriver::SetFreezeState(
+	const std::wstring& driveLetters,
+	DriveFreezeState state
+) noexcept {
+	if (driveLetters.empty()) {
+		logger.DLog(LogLevel::Info, L"[HugoFreeze] Unfreeze all drives");
+		bool res = ModifyConfig(0, false);
+		return FreezeResult(res ? FrzOR::Success : FrzOR::Failed);
+	}
+	uint32_t volMask = CalculateVolumeMask(driveLetters);
+	if (volMask == -1) {
+		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Invalid drive letters: {}", driveLetters));
+		return FreezeResult(FrzOR::Failed).setErrMsg(L"Invalid drive letters");
+	}
+	logger.DLog(LogLevel::Info, std::format(L"[HugoFreeze] Freeze drives: {} (mask=0x{:08X})", driveLetters, volMask));
+	bool res = ModifyConfig(volMask, true);
+	return FreezeResult(res ? FrzOR::Success : FrzOR::Failed);
+}
+
+std::wstring HugoFreezeDriver::GetLastErrorMsg() const noexcept {
+	return L"";
+}
+DWORD HugoFreezeDriver::GetLastErrorCode() const noexcept {
+	return 0;
+}
+

@@ -13,24 +13,24 @@
 
 namespace WinUtils {
 	using LoggerInitProc = void(Logger& logger);
-	inline const wchar_t* DftLogger = L"Default";
+	inline const char_t* DftLogger = TS("Default");
 	enum class LogLevel : uint8_t { Debug = 0, Info = 1, Warn = 2, Error = 3 };
 	enum class LogFormat { Time = 0, Level = 1 };
 	class LogOutputStrategy {
 	public:
 		virtual ~LogOutputStrategy() = default;
 		virtual void Output(LogLevel level,
-			std::wstring_view formatted_log) noexcept = 0;
+			string_view_t formatted_log) noexcept = 0;
 	};
 
 	class FileLogStrategy : public LogOutputStrategy {
 	public:
-		explicit FileLogStrategy(std::wstring_view log_path);
+		explicit FileLogStrategy(string_view_t log_path);
 		void Output(LogLevel level,
-			const std::wstring_view formatted_log) noexcept override;
+			const string_view_t formatted_log) noexcept override;
 
 	private:
-		std::wstring m_logPath;
+		string_t m_logPath;
 		std::mutex m_fileMutex;
 	};
 
@@ -38,7 +38,7 @@ namespace WinUtils {
 	public:
 		ConsoleLogStrategy();
 		void Output(LogLevel level,
-			const std::wstring_view formatted_log) noexcept override;
+			const string_view_t formatted_log) noexcept override;
 
 	private:
 		bool m_isConsoleInitialized = false;
@@ -47,7 +47,7 @@ namespace WinUtils {
 	class DebugLogStrategy : public LogOutputStrategy {
 	public:
 		void Output(LogLevel level,
-			const std::wstring_view formatted_log) noexcept override;
+			const string_view_t formatted_log) noexcept override;
 	};
 
 	class LoggerCore {
@@ -58,24 +58,24 @@ namespace WinUtils {
 		LoggerCore& operator=(const LoggerCore&) = delete;
 		LoggerCore& operator=(LoggerCore&&) = delete;
 
-		void Log(LogLevel level, std::wstring_view msg, std::wstring_view apartment = L"") noexcept;
+		void Log(LogLevel level, string_view_t msg, string_view_t apartment = TS("")) noexcept;
 
 		template<class Strategy, class... Args>
 		void AddStrategy(Args&& ...) noexcept;
 		void ClearStrategies() noexcept;
-		void SetDefaultStrategies(std::wstring_view log_path = L"") noexcept;
+		void SetDefaultStrategies(string_view_t log_path = TS("")) noexcept;
 
 		void EnableAllApartments() noexcept;
 		void DisableAllApartments() noexcept;
-		void EnableApartment(std::wstring_view apartment);
-		void DisableApartment(std::wstring_view apartment);
+		void EnableApartment(string_view_t apartment);
+		void DisableApartment(string_view_t apartment);
 		const Logger& GetDefaultLogger();
-		const std::optional<std::reference_wrapper<Logger>> GetLogger(std::wstring_view apartment);
+		const std::optional<std::reference_wrapper<Logger>> GetLogger(string_view_t apartment);
 
 	private:
 		friend Logger;
 		void AddLogger(Logger& logger);
-		void DeleteLogger(std::wstring_view apartment);
+		void DeleteLogger(string_view_t apartment);
 
 	private:
 		LoggerCore();
@@ -83,7 +83,7 @@ namespace WinUtils {
 
 		std::set<std::unique_ptr<LogOutputStrategy>> m_strategies;
 		std::mutex m_loggerMutex;
-		std::set<std::wstring> m_enabledApartments;
+		std::set<string_t> m_enabledApartments;
 		std::set<Logger*> m_loggers;
 	};
 	template<class Strategy, class ...Args>
@@ -98,38 +98,38 @@ namespace WinUtils {
 	class Logger {
 	public:
 		explicit Logger(
-			std::wstring_view apartment, LoggerInitProc proc = [](Logger&) {});
+			string_view_t apartment, LoggerInitProc proc = [](Logger&) {});
 		~Logger();
 
-		std::wstring_view GetApartment() const noexcept { return m_apartment; }
+		string_view_t GetApartment() const noexcept { return m_apartment; }
 		void AddFormat(LogFormat format);
 		void ClearFormat();
 		bool HasFormat(LogFormat format) const;
-		void Debug(std::wstring_view msg) noexcept { Log(LogLevel::Debug, msg); }
-		void Info(std::wstring_view msg) noexcept { Log(LogLevel::Info, msg); }
-		void Warn(std::wstring_view msg) noexcept { Log(LogLevel::Warn, msg); }
-		void Error(std::wstring_view msg) noexcept { Log(LogLevel::Error, msg); }
-		void Log(LogLevel level, std::wstring_view msg)const noexcept;
-		void DLog(LogLevel level, std::wstring_view msg)const noexcept {
+		void Debug(string_view_t msg) noexcept { Log(LogLevel::Debug, msg); }
+		void Info(string_view_t msg) noexcept { Log(LogLevel::Info, msg); }
+		void Warn(string_view_t msg) noexcept { Log(LogLevel::Warn, msg); }
+		void Error(string_view_t msg) noexcept { Log(LogLevel::Error, msg); }
+		void Log(LogLevel level, string_view_t msg)const noexcept;
+		void DLog(LogLevel level, string_view_t msg)const noexcept {
 #if WINUTILS_DEBUG
 			Log(level, msg);
 #endif
 		};
 
 	private:
-		std::wstring FormatLog(LogLevel level, std::wstring_view msg)const noexcept;
-		std::wstring GetFormattedTime() const noexcept;
-		std::wstring_view m_apartment;
+		string_t FormatLog(LogLevel level, string_view_t msg)const noexcept;
+		string_t GetFormattedTime() const noexcept;
+		string_view_t m_apartment;
 		std::vector<LogFormat> m_format;
 	};
 	inline void WLog(LogLevel level, int file, int line) noexcept {
 		WinUtils::LoggerCore::Inst().GetDefaultLogger().Log(
-			level, std::format(L"{}@{}", file, line));
+			level, std::format(TS("{}@{}"), file, line));
 	};
-	inline void WLog(LogLevel level, std::wstring_view msg) noexcept {
+	inline void WLog(LogLevel level, string_view_t msg) noexcept {
 		WinUtils::LoggerCore::Inst().GetDefaultLogger().Log(level, msg);
 	};
-	inline void WuDebug(LogLevel level, std::wstring_view msg) noexcept {
+	inline void WuDebug(LogLevel level, string_view_t msg) noexcept {
 #if WINUTILS_DEBUG
 		WinUtils::LoggerCore::Inst().GetDefaultLogger().Log(level, msg);
 #endif

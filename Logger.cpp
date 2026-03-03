@@ -9,17 +9,21 @@
 using namespace WinUtils;
 using namespace std;
 
-FileLogStrategy::FileLogStrategy(std::wstring_view log_path)
+FileLogStrategy::FileLogStrategy(string_view_t log_path)
 	: m_logPath(log_path) {
 }
 
 void FileLogStrategy::Output(LogLevel /*level*/,
-	const std::wstring_view formatted_log) noexcept {
+	const string_view_t formatted_log) noexcept {
 	std::lock_guard<std::mutex> lock(m_fileMutex);
-	string str = WideStringToUtf8(formatted_log) + "\n";
+	string str = ConvertString<string>((string_t)formatted_log) + '\n';
 	FILE* f = 0;
 	try {
+#if USE_WIDE_STRING
 		_wfopen_s(&f, m_logPath.c_str(), L"a");
+#else
+		fopen_s(&f, m_logPath.c_str(), "a");
+#endif
 		if (!f)
 			return;
 		fwrite(str.c_str(), sizeof(char), str.length(), f);
@@ -41,17 +45,17 @@ ConsoleLogStrategy::ConsoleLogStrategy() {
 }
 
 void ConsoleLogStrategy::Output(
-	LogLevel level, const std::wstring_view formatted_log) noexcept {
+	LogLevel level, const string_view_t formatted_log) noexcept {
 	if (!m_isConsoleInitialized)
 		return;
 	try {
 		if (level == LogLevel::Error) {
-			wcerr << formatted_log << L"\n";
-			wcerr.flush();
+			tcerr << formatted_log << TS("\n");
+			tcerr.flush();
 		}
 		else {
-			wcout << formatted_log << L"\n";
-			wcout.flush();
+			tcout << formatted_log << TS("\n");
+			tcout.flush();
 		}
 	}
 	catch (...) {
@@ -60,11 +64,11 @@ void ConsoleLogStrategy::Output(
 
 //               
 void DebugLogStrategy::Output(LogLevel /*level*/,
-	const std::wstring_view formatted_log) noexcept {
-	OutputDebugStringW((std::wstring(formatted_log) + L"\n").c_str());
+	const string_view_t formatted_log) noexcept {
+	TF(OutputDebugString)((string_t(formatted_log) + TS("\n")).c_str());
 }
 
-Logger::Logger(std::wstring_view apartment, LoggerInitProc proc)
+Logger::Logger(string_view_t apartment, LoggerInitProc proc)
 	: m_apartment(apartment) {
 	LoggerCore::Inst().AddLogger(*this);
 	proc(*this);
@@ -89,11 +93,11 @@ void LoggerCore::ClearStrategies() noexcept {
 	m_strategies.clear();
 }
 
-void LoggerCore::SetDefaultStrategies(std::wstring_view log_path) noexcept {
+void LoggerCore::SetDefaultStrategies(string_view_t log_path) noexcept {
 	ClearStrategies();
-	wstring path = log_path.empty()
-		? (::GetCurrentProcessDir() + L"log.txt")
-		: wstring(log_path);
+	string_t path = log_path.empty()
+		? (::GetCurrentProcessDir() + TS("log.txt"))
+		: string_t(log_path);
 	AddStrategy<FileLogStrategy>(path);
 	AddStrategy<DebugLogStrategy>();
 }
@@ -105,17 +109,17 @@ void WinUtils::LoggerCore::EnableAllApartments() noexcept
 
 void WinUtils::LoggerCore::DisableAllApartments() noexcept
 {
-	for(auto & logger : m_loggers) {
-		m_enabledApartments.insert(wstring(logger->GetApartment()));
+	for (auto& logger : m_loggers) {
+		m_enabledApartments.insert(string_t(logger->GetApartment()));
 	}
 }
 
-void LoggerCore::EnableApartment(std::wstring_view apartment) {
-	m_enabledApartments.insert(std::wstring(apartment));
+void LoggerCore::EnableApartment(string_view_t apartment) {
+	m_enabledApartments.insert(string_t(apartment));
 }
 
-void LoggerCore::DisableApartment(std::wstring_view apartment) {
-	m_enabledApartments.erase(std::wstring(apartment));
+void LoggerCore::DisableApartment(string_view_t apartment) {
+	m_enabledApartments.erase(string_t(apartment));
 }
 
 const Logger& LoggerCore::GetDefaultLogger() {
@@ -130,7 +134,7 @@ const Logger& LoggerCore::GetDefaultLogger() {
 	}
 }
 
-const std::optional<std::reference_wrapper<Logger>> WinUtils::LoggerCore::GetLogger(std::wstring_view apartment)
+const std::optional<std::reference_wrapper<Logger>> WinUtils::LoggerCore::GetLogger(string_view_t apartment)
 {
 	auto it = find_if(m_loggers.begin(), m_loggers.end(),
 		[&](const Logger* logger) {
@@ -146,7 +150,7 @@ void LoggerCore::AddLogger(Logger& logger) {
 	m_loggers.insert(&logger);
 }
 
-void LoggerCore::DeleteLogger(std::wstring_view apartment) {
+void LoggerCore::DeleteLogger(string_view_t apartment) {
 	erase_if(m_loggers,
 		[&](Logger* logger) {
 			return logger->GetApartment() == apartment;
@@ -157,39 +161,32 @@ LoggerCore::LoggerCore() {}
 
 LoggerCore::~LoggerCore() {}
 
-std::wstring Logger::GetFormattedTime() const noexcept {
-	const auto now = chrono::system_clock::now();
-	const auto time_t_now = chrono::system_clock::to_time_t(now);
-	tm local_tm{};
-	localtime_s(&local_tm, &time_t_now);
-
-	wchar_t time_buf[32] = { 0 };
-	swprintf_s(time_buf, L"%04d-%02d-%02d %02d:%02d:%02d",
-		local_tm.tm_year + 1900, local_tm.tm_mon + 1, local_tm.tm_mday,
-		local_tm.tm_hour, local_tm.tm_min, local_tm.tm_sec);
-	return time_buf;
+string_t Logger::GetFormattedTime() const noexcept {
+	const auto now_utc = std::chrono::system_clock::now();
+	const auto local_time = std::chrono::current_zone()->to_local(now_utc);
+	return std::format(TS("{:%Y-%m-%d %H:%M:%S}"), local_time);
 }
 
 void Logger::Log(LogLevel level,
-	std::wstring_view msg) const noexcept {
-	wstring formatted_msg = FormatLog(level, msg);
+	string_view_t msg) const noexcept {
+	string_t formatted_msg = FormatLog(level, msg);
 	LoggerCore::Inst().Log(level, formatted_msg, m_apartment);
 }
 
-std::wstring Logger::FormatLog(LogLevel level,
-	std::wstring_view msg) const noexcept {
-	wstringstream formattedLog;
-	const wchar_t* level_str = L"DEBUG";
+string_t Logger::FormatLog(LogLevel level,
+	string_view_t msg) const noexcept {
+	stringstream_t formattedLog;
+	const char_t* level_str = TS("DEBUG");
 	if (level == LogLevel::Info)
-		level_str = L"INFO";
+		level_str = TS("INFO");
 	if (level == LogLevel::Warn)
-		level_str = L"WARN";
+		level_str = TS("WARN");
 	if (level == LogLevel::Error)
-		level_str = L"ERROR";
+		level_str = TS("ERROR");
 	if (HasFormat(LogFormat::Time))
-		formattedLog << L"[" << GetFormattedTime() << "]";
+		formattedLog << TS("[") << GetFormattedTime() << TS("]");
 	if (HasFormat(LogFormat::Level))
-		formattedLog << L"[" << level_str << L"]";
+		formattedLog << TS("[") << level_str << TS("]");
 	formattedLog << msg.data();
 
 	return formattedLog.str();
@@ -200,10 +197,10 @@ LoggerCore& ::LoggerCore::Inst() noexcept {
 	return instance;
 }
 
-void LoggerCore::Log(LogLevel level, std::wstring_view msg, std::wstring_view apartment) noexcept {
+void LoggerCore::Log(LogLevel level, string_view_t msg, string_view_t apartment) noexcept {
 	if (msg.empty())
 		return;
-	if (apartment != L"" && m_enabledApartments.find(wstring(apartment)) == m_enabledApartments.end())
+	if (apartment != TS("") && m_enabledApartments.find(string_t(apartment)) == m_enabledApartments.end())
 		return;
 	lock_guard<mutex> lock(m_loggerMutex);
 	for (const auto& strategy : m_strategies) {

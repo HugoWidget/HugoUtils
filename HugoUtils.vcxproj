@@ -160,6 +160,7 @@
     <ClInclude Include="HugoInfo.h" />
     <ClInclude Include="HugoMount.h" />
     <ClInclude Include="HugoUtils.h" />
+    <ClInclude Include="ini.h" />
     <ClInclude Include="Injector.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="md5.h" />
@@ -190,6 +191,7 @@
     <ClCompile Include="HugoInfo.cpp" />
     <ClCompile Include="HugoMount.cpp" />
     <ClCompile Include="HugoUtils.cpp" />
+    <ClCompile Include="ini.cpp" />
     <ClCompile Include="Injector.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="md52.cpp" />

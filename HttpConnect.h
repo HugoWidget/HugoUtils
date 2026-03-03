@@ -10,9 +10,9 @@ public:
 	HttpConnect();
 	~HttpConnect();
 	void setPort(short port);
-	std::wstring socketHttp(std::wstring host, std::wstring request)const;
-	std::wstring postData(std::wstring host, std::wstring path, std::wstring post_content)const;
-	std::wstring getData(std::wstring host, std::wstring path, std::wstring get_content)const;
+	string_t socketHttp(string_t host, string_t request)const;
+	string_t postData(string_t host, string_t path, string_t post_content)const;
+	string_t getData(string_t host, string_t path, string_t get_content)const;
 private:
 	short port = 80;
 };

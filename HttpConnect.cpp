@@ -6,13 +6,12 @@
 #pragma comment(lib,"ws2_32.lib")
 using namespace WinUtils;
 using namespace std;
-static Logger logger(L"HttpConnect");
-
+static Logger logger(TS("HttpConnect"));
 HttpConnect::HttpConnect()
 {
 	WSADATA wsa = { 0 };
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-		logger.DLog(LogLevel::Error, format(L"WSAStartup failed! Error: {}\n", WSAGetLastError()));
+		logger.DLog(LogLevel::Error, format(TS("WSAStartup failed! Error: {}\n"), WSAGetLastError()));
 	}
 }
 
@@ -26,45 +25,46 @@ void HttpConnect::setPort(short port)
 	this->port = port;
 }
 
-std::wstring HttpConnect::socketHttp(std::wstring host, std::wstring request)const
+string_t HttpConnect::socketHttp(string_t host, string_t request)const
 {
 	SOCKET sockfd = -1;
-	ADDRINFOW hints, * servinfo = nullptr, * p = nullptr;
+
+	TF(ADDRINFO) hints, * servinfo = nullptr, * p = nullptr;
 	int rv = 0;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	if ((rv = GetAddrInfo(host.c_str(), to_wstring(port).c_str(), &hints, &servinfo)) != 0) {
-		logger.DLog(LogLevel::Error, format(L"GetAddrInfo failed! Error:{} ", gai_strerrorW(rv)));
-		return L"";
+	if ((rv = TF(GetAddrInfo)(host.c_str(), to_tstring(port).c_str(), &hints, &servinfo)) != 0) {
+		logger.DLog(LogLevel::Error, format(TS("GetAddrInfo failed! Error:{} "), TF(gai_strerror)(rv)));
+		return TS("");
 	}
 	for (p = servinfo; p != nullptr; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-			logger.DLog(LogLevel::Error, format(L"socket create failed! Error: {}", WSAGetLastError()));
+			logger.DLog(LogLevel::Error, format(TS("socket create failed! Error: {}"), WSAGetLastError()));
 			continue;
 		}
 		if (connect(sockfd, p->ai_addr, (int)p->ai_addrlen) == -1) {
 			closesocket(sockfd);
-			logger.DLog(LogLevel::Error, format(L"connection error! Error:{} ", WSAGetLastError()));
+			logger.DLog(LogLevel::Error, format(TS("connection error! Error:{} "), WSAGetLastError()));
 			continue;
 		}
 
 		break;
 	}
 
-	FreeAddrInfo(servinfo);
+	TF(FreeAddrInfo)(servinfo);
 	if (p == nullptr) {
-		logger.DLog(LogLevel::Error, format(L"Failed to connect to {}:{}", host, port));
-		return L"";
+		logger.DLog(LogLevel::Error, format(TS("Failed to connect to {}:{}"), host, port));
+		return TS("");
 	}
 
-	logger.DLog(LogLevel::Error, format(L"{}", request.c_str()));
-	char* ansi_request = WideStringToAnsi(request);
+	logger.DLog(LogLevel::Error, format(TS("{}"), request.c_str()));
+	string temp_request = ConvertString<string>(request);
+	const char* ansi_request = temp_request.c_str();
 	send(sockfd, ansi_request, (int)request.length(), 0);
-	delete ansi_request;
 	ansi_request = 0;
-	
+
 	char buf[4096] = { 0 };
 	int offset = 0;
 	int rc;
@@ -73,39 +73,41 @@ std::wstring HttpConnect::socketHttp(std::wstring host, std::wstring request)con
 	{
 		offset += rc;
 		if (offset >= sizeof(buf) - 1) {
-			logger.DLog(LogLevel::Error, L"Response buffer full, truncating data");
+			logger.DLog(LogLevel::Error, TS("Response buffer full, truncating data"));
 			break;
 		}
 	}
-
+	string_t res = ConvertString<string_t>((string)buf);
+	logger.DLog(LogLevel::Debug, TS("socketHttp response:\n") + res);
 	closesocket(sockfd);
 	buf[offset] = 0;
-	return AnsiToWideString(buf);
+	return res;
 }
 
-std::wstring HttpConnect::postData(std::wstring host, std::wstring path, std::wstring post_content)const
+string_t HttpConnect::postData(string_t host, string_t path, string_t post_content)const
 {
-	wstringstream stream;
-	stream << L"POST " << path;
-	stream << L" HTTP/1.0\r\n";
-	stream << L"Host: " << host << "\r\n";
-	stream << L"User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n";
-	stream << L"Content-Type:application/x-www-form-urlencoded\r\n";
-	stream << L"Content-Length:" << post_content.length() << "\r\n";
-	stream << L"Connection:close\r\n\r\n";
+	stringstream_t stream;
+	stream << TS("POST ") << path;
+	stream << TS(" HTTP/1.0\r\n");
+	stream << TS("Host: ") << host << TS("\r\n");
+	stream << TS("User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n");
+	stream << TS("Content-Type:application/x-www-form-urlencoded\r\n");
+	stream << TS("Content-Length:") << post_content.length() << TS("\r\n");
+	stream << TS("Connection:close\r\n\r\n");
 	stream << post_content.c_str();
-
-	return socketHttp(host, stream.str());
+	string_t res = socketHttp(host, stream.str());
+	logger.DLog(LogLevel::Debug, TS("postData response:\n") + res);
+	return res;
 }
 
-std::wstring HttpConnect::getData(std::wstring host, std::wstring path, std::wstring get_content)const
+string_t HttpConnect::getData(string_t host, string_t path, string_t get_content)const
 {
-	wstringstream stream;
-	stream << L"GET " << path << (get_content.length() ? L"?" : L"") << get_content;
-	stream << L" HTTP/1.0\r\n";
-	stream << L"Host: " << host << "\r\n";
-	stream << L"User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n";
-	stream << L"Connection:close\r\n\r\n";
+	stringstream_t stream;
+	stream << TS("GET ") << path << (get_content.length() ? TS("?") : TS("")) << get_content;
+	stream << TS(" HTTP/1.0\r\n");
+	stream << TS("Host: ") << host << TS("\r\n");
+	stream << TS("User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n");
+	stream << TS("Connection:close\r\n\r\n");
 
 	return socketHttp(host, stream.str());
 }

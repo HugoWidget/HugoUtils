@@ -21,7 +21,6 @@ public:
     // Configuration management
     virtual void SetConfig(const std::wstring& ip, uint16_t port) noexcept;
     virtual void GetConfig(std::wstring& outIp, uint16_t& outPort) const noexcept;
-    virtual DriverStatusInfo GetDriverStatus() const noexcept;
 
     // Core functionalities
     virtual FreezeResult GetFreezeState() const noexcept;
