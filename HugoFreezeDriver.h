@@ -53,6 +53,7 @@ public:
 
 	static std::wstring HexDump(const unsigned char* data, int len)noexcept;
 private:
+	HANDLE m_hDriver = NULL;
 	HANDLE OpenDriver();
 	bool ModifyConfig(uint32_t newVol, bool enable) noexcept;
 	HugoFreezeDriver() = default;

@@ -13,40 +13,37 @@ HugoFreezeDriver& HugoFreezeDriver::Instance() noexcept {
 }
 
 FreezeResult HugoFreezeDriver::Init() noexcept {
+	if (IsInitialized())return FreezeResult(FrzOR::Success);
 	QueryResult result;
-	HANDLE hDevice = OpenDriver();
-	if (hDevice == INVALID_HANDLE_VALUE) {
+	m_hDriver = OpenDriver();
+	if (m_hDriver == INVALID_HANDLE_VALUE) {
 		result.lastError = GetLastError();
 		result.driverOpenSuccess = false;
 		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Open driver fail, err: {}", result.lastError));
+		m_hDriver = NULL;
 	}
-	CloseHandle(hDevice);
+	result.driverOpenSuccess = true;
 	return FreezeResult(result.driverOpenSuccess ? FrzOR::Success : FrzOR::InitFailed).setError(result.lastError);
 }
 
 void HugoFreezeDriver::Cleanup() noexcept {
-	return;
+	if (IsInitialized())CloseHandle(m_hDriver);
 }
 
 bool HugoFreezeDriver::IsInitialized() const noexcept {
-	return true;
+	return m_hDriver != NULL && m_hDriver != INVALID_HANDLE_VALUE;
 }
 
 QueryResult HugoFreezeDriver::QueryDriverStatus() noexcept {
 	QueryResult result;
-	HANDLE hDevice = OpenDriver();
-	if (hDevice == INVALID_HANDLE_VALUE) {
-		result.lastError = GetLastError();
-		result.driverOpenSuccess = false;
-		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Open driver fail, err: {}", result.lastError));
-		return result;
-	}
+	result.driverOpenSuccess = false;
+	if (!IsInitialized())return result;
 	result.driverOpenSuccess = true;
 
 	// 查询运行时状态
 	unsigned char buf[CONFIG_SIZE] = { 0 };
 	DWORD bytesReturned = 0;
-	if (DeviceIoControl(hDevice, IOCTL_QUERY_RUNTIME, nullptr, 0, buf, CONFIG_SIZE, &bytesReturned, nullptr)) {
+	if (DeviceIoControl(m_hDriver, IOCTL_QUERY_RUNTIME, nullptr, 0, buf, CONFIG_SIZE, &bytesReturned, nullptr)) {
 		result.runtimeStatus.querySuccess = true;
 		result.runtimeStatus.activeFlag = *reinterpret_cast<uint32_t*>(buf + OFF_RT_ACTIVE);
 		result.runtimeStatus.ptr1 = *reinterpret_cast<uint64_t*>(buf + OFF_RT_PTR1);
@@ -64,7 +61,7 @@ QueryResult HugoFreezeDriver::QueryDriverStatus() noexcept {
 
 	// 查询启动配置
 	memset(buf, 0, CONFIG_SIZE);
-	if (DeviceIoControl(hDevice, IOCTL_READ_MEM_CONF, nullptr, 0, buf, CONFIG_SIZE, &bytesReturned, nullptr)) {
+	if (DeviceIoControl(m_hDriver, IOCTL_READ_MEM_CONF, nullptr, 0, buf, CONFIG_SIZE, &bytesReturned, nullptr)) {
 		result.bootConfig.querySuccess = true;
 		memcpy(result.bootConfig.buffer, buf, CONFIG_SIZE);
 		result.bootConfig.validLen = 0x90;
@@ -75,18 +72,15 @@ QueryResult HugoFreezeDriver::QueryDriverStatus() noexcept {
 		result.bootConfig.querySuccess = false;
 		logger.DLog(LogLevel::Error, L"[HugoFreeze] Query boot config fail");
 	}
-
-	CloseHandle(hDevice);
 	return result;
 }
 
 // Core functionalities
 FreezeResult HugoFreezeDriver::GetFreezeState() const noexcept {
-	return FreezeResult(FrzOR::Failed);
-
+	return FreezeResult(FrzOR::NotSupported);
 }
 FreezeResult HugoFreezeDriver::TryProtect(const std::wstring& driveLetters) const noexcept {
-	return FreezeResult(FrzOR::Failed);
+	return FreezeResult(FrzOR::NotSupported);
 }
 
 HANDLE HugoFreezeDriver::OpenDriver()
@@ -140,56 +134,49 @@ bool HugoFreezeDriver::ModifyConfig(uint32_t newVol, bool enable) noexcept {
 	HexDump(buffer, 0x90);
 
 	// Write to driver
-	HANDLE hDriver = OpenDriver();
-	if (hDriver == INVALID_HANDLE_VALUE) {
-		DWORD err = GetLastError();
-		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Open driver fail, err: {}", err));
-		return false;
-	}
+	if (IsInitialized()) {
+		DWORD bytesReturned = 0;
+		unsigned char dummyBuffer[1024] = { 0 };
+		if (DeviceIoControl(m_hDriver, IOCTL_PREPARE_WRITE, nullptr, 0, dummyBuffer, 1024, &bytesReturned, nullptr)) {
+			logger.DLog(LogLevel::Debug, L"[HugoFreeze] IOCTL_PREPARE_WRITE success");
+		}
+		else {
+			DWORD err = GetLastError();
+			logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] IOCTL_PREPARE_WRITE fail, err: {}", err));
+		}
 
-	DWORD bytesReturned = 0;
-	unsigned char dummyBuffer[1024] = { 0 };
-	if (DeviceIoControl(hDriver, IOCTL_PREPARE_WRITE, nullptr, 0, dummyBuffer, 1024, &bytesReturned, nullptr)) {
-		logger.DLog(LogLevel::Debug, L"[HugoFreeze] IOCTL_PREPARE_WRITE success");
-	}
-	else {
-		DWORD err = GetLastError();
-		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] IOCTL_PREPARE_WRITE fail, err: {}", err));
-	}
+		DWORD bytesWritten = 0;
+		if (!WriteFile(m_hDriver, buffer, CONFIG_SIZE, &bytesWritten, nullptr)) {
+			DWORD err = GetLastError();
+			logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Write driver fail, err: {}", err));
+			return false;
+		}
 
-	DWORD bytesWritten = 0;
-	if (!WriteFile(hDriver, buffer, CONFIG_SIZE, &bytesWritten, nullptr)) {
-		DWORD err = GetLastError();
-		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Write driver fail, err: {}", err));
-		CloseHandle(hDriver);
-		return false;
-	}
-	CloseHandle(hDriver);
+		// Write to config file
+		HANDLE hConfigFile = CreateFileW(SWF_CONFIG_PATH, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+		if (hConfigFile == INVALID_HANDLE_VALUE) {
+			DWORD err = GetLastError();
+			logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Open config file fail, err: {}", err));
+			return false;
+		}
 
-	// Write to config file
-	HANDLE hConfigFile = CreateFileW(SWF_CONFIG_PATH, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
-	if (hConfigFile == INVALID_HANDLE_VALUE) {
-		DWORD err = GetLastError();
-		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Open config file fail, err: {}", err));
-		return false;
-	}
+		if (!WriteFile(hConfigFile, buffer, CONFIG_SIZE, &bytesWritten, nullptr)) {
+			DWORD err = GetLastError();
+			logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Write config file fail, err: {}", err));
+			CloseHandle(hConfigFile);
+			return false;
+		}
 
-	if (!WriteFile(hConfigFile, buffer, CONFIG_SIZE, &bytesWritten, nullptr)) {
-		DWORD err = GetLastError();
-		logger.DLog(LogLevel::Error, std::format(L"[HugoFreeze] Write config file fail, err: {}", err));
 		CloseHandle(hConfigFile);
-		return false;
 	}
-
-	CloseHandle(hConfigFile);
 	logger.DLog(LogLevel::Info, L"[HugoFreeze] Config modified, reboot to apply");
 	return true;
 }
 
 std::wstring HugoFreezeDriver::HexDump(const unsigned char* data, int len)noexcept {
 	std::wstring content;
-	content += L"    Offset | 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F";
-	content += L"    -------+------------------------------------------------";
+	content += L"    Offset | 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F\n";
+	content += L"    -------+------------------------------------------------\n";
 
 	for (int i = 0; i < len; i += 16) {
 		std::wstring line = std::format(L"    0x{:04X} | ", i);

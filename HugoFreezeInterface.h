@@ -12,7 +12,8 @@ enum class FreezeOperationResult : uint8_t {
 	DriverError = 3,    // Driver error
 	NetworkError = 4,   // Network error
 	InitFailed = 5,     // Initialization failed
-	NotInitialized = 6  // Not initialized
+	NotInitialized = 6, // Not initialized
+	NotSupported = 7     // Not supported
 };
 using FrzOR = FreezeOperationResult;
 enum class DriveFreezeState : uint8_t {
