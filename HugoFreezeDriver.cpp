@@ -1,9 +1,10 @@
-#include "HugoFreezeDriver.h"
-#include "Logger.h"
-#include "md5.h"
 #include <fstream>
 #include <format>
 #include <algorithm>
+
+#include "HugoFreezeDriver.h"
+#include "Logger.h"
+#include "hashlib/md5.h"
 using namespace WinUtils;
 static Logger logger(L"HugoFreezeDriver");
 
@@ -123,11 +124,10 @@ bool HugoFreezeDriver::ModifyConfig(uint32_t newVol, bool enable) noexcept {
 	*reinterpret_cast<uint32_t*>(buffer + SWF_OFFSET_UINT32_VOL_MASK_COPY) = newVol;
 
 	// Calc MD5
-	MD5_CTX ctx;
-	unsigned char digest[MD5_DIGEST_LENGTH] = { 0 };
-	MD5_Init(&ctx);
-	MD5_Update(&ctx, buffer + SWF_OFFSET_UINT32_NEXT_MASK, CONFIG_SIZE - SWF_OFFSET_UINT32_NEXT_MASK);
-	MD5_Final(digest, &ctx);
+	MD5 md5;
+	unsigned char digest[MD5::HashBytes] = { 0 };
+	md5.add(buffer + SWF_OFFSET_UINT32_NEXT_MASK, CONFIG_SIZE - SWF_OFFSET_UINT32_NEXT_MASK);
+	md5.getHash(digest);
 	memcpy(buffer, digest, 16);
 
 	logger.DLog(LogLevel::Debug, L"[HugoFreeze] Config buffer ready");

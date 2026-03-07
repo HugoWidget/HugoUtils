@@ -1,8 +1,9 @@
-#include "GPL3.h"
-#include <fstream>
 #include <Windows.h>
+
+#include <fstream>
 #include <string>
 
+#include "GPL3.h"
 void ShowWarranty() {
 	const wchar_t* warranty =
 		L"THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.\n"

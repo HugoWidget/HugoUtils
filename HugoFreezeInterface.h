@@ -1,8 +1,9 @@
 #pragma once
+#include <Windows.h>
+
 #include <cstdint>
 #include <vector>
 #include <string>
-#include <Windows.h>
 
 // Common enumeration definitions
 enum class FreezeOperationResult : uint8_t {

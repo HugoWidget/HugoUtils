@@ -1,6 +1,6 @@
-#include "ini.h"
 #include <iostream>
 
+#include "ini.h"
 namespace WinUtils
 {
     INIReader::INIReader(std::filesystem::path const& filename, bool keepLineData)

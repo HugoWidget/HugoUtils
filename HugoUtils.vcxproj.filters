@@ -65,16 +65,13 @@
     <ClInclude Include="HugoFreezeDriver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="md5.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="HugoMount.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="HugoFreezeApi.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Regedit.h">
+    <ClInclude Include="WinReg.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="hashlib\crc32.h">
@@ -101,9 +98,6 @@
     <ClInclude Include="hashlib\sha256.h">
       <Filter>头文件\hashlib</Filter>
     </ClInclude>
-    <ClInclude Include="sha256.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="HugoFreezeInterface.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -111,6 +105,12 @@
       <Filter>头文件\httplib</Filter>
     </ClInclude>
     <ClInclude Include="ini.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BruteforceModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="HugoPassword.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -157,16 +157,13 @@
     <ClCompile Include="HugoFreezeDriver.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="md52.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="HugoMount.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="HugoFreezeApi.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Regedit.cpp">
+    <ClCompile Include="WinReg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="hashlib\crc32.cpp">
@@ -190,13 +187,16 @@
     <ClCompile Include="hashlib\sha256.cpp">
       <Filter>源文件\hashlib</Filter>
     </ClCompile>
-    <ClCompile Include="sha2562.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="HugoFreezeInterface.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ini.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BruteforceModel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="HugoPassword.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

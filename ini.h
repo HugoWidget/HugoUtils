@@ -1,6 +1,4 @@
-#ifndef INI_H
-#define INI_H
-
+#pragma once
 #include <string>
 #include <sstream>
 #include <algorithm>
@@ -11,6 +9,7 @@
 #include <fstream>
 #include <cctype>
 #include <filesystem>
+
 #include "WinUtilsDef.h"
 #define INI_CASE_SENSITIVE
 namespace WinUtils
@@ -365,5 +364,3 @@ namespace WinUtils
 		return data.end();
 	}
 }
-
-#endif // INI_H

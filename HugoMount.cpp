@@ -1,13 +1,14 @@
-#include "HugoMount.h"
-#include "Logger.h"
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
 #include <mutex>
-#include "StrConvert.h"
 #include <iomanip>
+
+#include "HugoMount.h"
+#include "Logger.h"
+#include "StrConvert.h"
 using namespace std;
 using namespace WinUtils;
 
@@ -74,7 +75,7 @@ HugoMountInfo HugoMount::GetAllInfo() const {
 		DWORD err = GetLastError();
 		logger.DLog(LogLevel::Warn,
 			format(L"Driver {} not found or insufficient permissions, error code: {}",
-				AnsiToWideString(DRIVER_SERVICE_NAME), err));
+				ConvertString<wstring>(DRIVER_SERVICE_NAME), err));
 	}
 	CloseServiceHandle(hSCM);
 
@@ -131,7 +132,7 @@ HugoMountInfo HugoMount::GetAllInfo() const {
 
 				logger.DLog(LogLevel::Debug,
 					format(L"Disk{} backing file{}: {} (size: {})",
-						i, k, AnsiToWideString(strPtr), entry->Size));
+						i, k, ConvertString<wstring>(strPtr), entry->Size));
 
 				strPtr += entry->PathLength;
 				++entry;
@@ -445,7 +446,7 @@ DWORD HugoMount::FindDriveLetter(int diskId, int partId, char& outLetter) const 
 	char targetPath[MAX_PATH] = {};
 	sprintf_s(targetPath, VDK_NT_PATH_FMT, diskId, partId);
 	logger.DLog(LogLevel::Debug,
-		format(L"Searching for drive letter: {}", AnsiToWideString(targetPath)));
+		format(L"Searching for drive letter: {}", ConvertString<wstring>(targetPath)));
 
 	char driveStr[4] = "A:";
 	char queryBuf[MAX_PATH] = {};
@@ -556,13 +557,13 @@ DWORD HugoMount::DoLink(int diskId, int partId, char driveLetter) const {
 	sprintf_s(targetPath, VDK_NT_PATH_FMT, diskId, partId);
 
 	logger.DLog(LogLevel::Debug,
-		format(L"Attempting to mount: {} -> {}", AnsiToWideString(dosDevice), AnsiToWideString(targetPath)));
+		format(L"Attempting to mount: {} -> {}", ConvertString<wstring>(dosDevice), ConvertString<wstring>(targetPath)));
 
 	// Verify the drive letter is not already taken
 	char checkBuf[MAX_PATH] = { 0 };
 	if (QueryDosDeviceA(dosDevice, checkBuf, MAX_PATH) != 0) {
 		logger.DLog(LogLevel::Warn,
-			format(L"Drive letter {} is already in use: {}", driveLetter, AnsiToWideString(checkBuf)));
+			format(L"Drive letter {} is already in use: {}", driveLetter, ConvertString<wstring>(checkBuf)));
 		return ERROR_ALREADY_ASSIGNED;
 	}
 

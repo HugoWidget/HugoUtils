@@ -1,9 +1,11 @@
-﻿#include "HugoInfo.h"
-#include <Windows.h>
+﻿#include <Windows.h>
+
 #include <iostream>
 #include <filesystem>
 #include <string_view>
 #include <optional>
+
+#include "HugoInfo.h"
 #include "StrConvert.h"
 #include "Logger.h"
 using namespace WinUtils;
@@ -48,7 +50,7 @@ std::optional<fs::path> HugoInfo::FindSpecificDir(
 		}
 	}
 	catch (const fs::filesystem_error& e) {
-		logger.Error(format(L"Failed to find directory:{}",AnsiToWideString(e.what())));
+		logger.Error(format(L"Failed to find directory:{}", ConvertString<wstring>(e.what())));
 	}
 
 	return std::nullopt;

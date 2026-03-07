@@ -1,10 +1,11 @@
-#include "ConsoleMenu.h"
-#include "Logger.h"
 #include <sstream>
 #include <cstdlib>
 #include <utility>
 #include <conio.h>
 #include <iomanip>
+
+#include "ConsoleMenu.h"
+#include "Logger.h"
 using namespace std;
 using namespace WinUtils;
 static Logger logger(TS("ConsoleMenu"));
@@ -91,7 +92,7 @@ string_t MenuNode::getFullPath() const {
 	return path.empty() ? TS("/") : path;
 }
 
-bool MenuNode::navigate(const vector<string_t>& segments, MenuNode*& currentNode, Args& args) {
+bool MenuNode::navigate(const vector<string_t>& segments, MenuNode*& currentNode, Args& args, bool silent) {
 	MenuNode* tempNode = currentNode;
 	for (const auto& seg : segments) {
 		if (seg == TS("..")) {
@@ -99,8 +100,8 @@ bool MenuNode::navigate(const vector<string_t>& segments, MenuNode*& currentNode
 				tempNode = tempNode->m_parent;
 			}
 			else {
-				wcerr << TS("Already at root menu!\n");
-				(void)_getwch();
+				if (!silent)wcerr << TS("Already at root menu!\n");
+				if (!silent)(void)_getwch();
 				return false;
 			}
 		}
@@ -109,8 +110,8 @@ bool MenuNode::navigate(const vector<string_t>& segments, MenuNode*& currentNode
 		}
 		else if (tempNode->m_commands.contains(seg)) {
 			tempNode->m_commands.at(seg).m_handler(*m_menu, args);
-			tcout << currentNode->getFullPath() << TS(">> ") << TS("Command executed successfully");
-			(void)_getwch();
+			if (!silent)tcout << currentNode->getFullPath() << TS(">> ") << TS("Command executed successfully");
+			if (!silent)(void)_getwch();
 			m_menu->setDisplayMode(MenuDisplayMode::Normal);
 			return true;
 		}
@@ -121,18 +122,18 @@ bool MenuNode::navigate(const vector<string_t>& segments, MenuNode*& currentNode
 #endif
 			if (seg[0] == TS('c')) {
 				if (num <= 0 || num > tempNode->m_commands.size()) {
-					tcerr << TS("Invalid numeric command index: ") << seg << TS("\n");
-					(void)_getwch();
+					if (!silent)tcerr << TS("Invalid numeric command index: ") << seg << TS("\n");
+					if (!silent)(void)_getwch();
 					return false;
 				}
 				auto it = tempNode->m_commands.begin();
 				advance(it, num - 1);
-				navigate({ it->first }, currentNode, args);
+				navigate({ it->first }, currentNode, args, silent);
 			}
 			else if (seg[0] == TS('s')) {
 				if (num <= 0 || num > tempNode->m_submenus.size()) {
-					tcerr << TS("Invalid numeric submenu index: ") << seg << TS("\n");
-					(void)_getwch();
+					if (!silent)tcerr << TS("Invalid numeric submenu index: ") << seg << TS("\n");
+					if (!silent)(void)_getwch();
 					return false;
 				}
 				auto it = tempNode->m_submenus.begin();
@@ -141,8 +142,8 @@ bool MenuNode::navigate(const vector<string_t>& segments, MenuNode*& currentNode
 			}
 		}
 		else {
-			tcerr << TS("Invalid path/command: ") << seg << TS("\n");
-			(void)_getwch();
+			if (!silent)tcerr << TS("Invalid path/command: ") << seg << TS("\n");
+			if (!silent)(void)_getwch();
 			return false;
 		}
 	}
@@ -246,7 +247,7 @@ MenuNode& ConsoleMenu::addSubmenuAtPath(const string_t & parentPath, string_t su
 	MenuNode* parentNode = &m_root;
 	CmdParser parser;
 	auto segments = splitPath(parentPath);
-	if (!parentNode->navigate(segments, parentNode, parser)) {
+	if (!parentNode->navigate(segments, parentNode, parser, true)) {
 		logger.DLog(LogLevel::Info, format(TS("Parent path does not exist: {}"), parentPath));
 		return *parentNode;
 	}
@@ -262,7 +263,7 @@ void ConsoleMenu::addCommandAtPath(const string_t & menuPath, string_t cmdName, 
 	CmdParser parser;
 	if (menuPath != TS("")) {
 		auto segments = splitPath(menuPath);
-		if (!targetNode->navigate(segments, targetNode, parser)) {
+		if (!targetNode->navigate(segments, targetNode, parser, true)) {
 			logger.DLog(LogLevel::Info, format(TS("Menu path does not exist: {}"), menuPath));
 			return;
 		}
@@ -272,6 +273,32 @@ void ConsoleMenu::addCommandAtPath(const string_t & menuPath, string_t cmdName, 
 
 void ConsoleMenu::addCommonCommand(string_t cmdName, string_t description, CmdProc func) {
 	m_commonCommands.emplace(move(cmdName), CommandItem(move(description), move(func)));
+}
+
+void WinUtils::ConsoleMenu::excute(string_t input, bool relative)
+{
+	size_t pos = input.find(TS(' '));
+	string_t strArgs;
+	if (pos != string_t::npos)
+		strArgs = input.substr(pos + 1);
+	string_t strCmd = input.substr(0, pos);
+	Args args;
+	(void)args.parse(strArgs, CmdParser::ParseMode::None);
+	// Execute common commands
+	for (auto const& cmd : m_commonCommands) {
+		if (input == cmd.first) {
+			cmd.second.m_handler(*this, args);
+		}
+	}
+
+	if (!input.empty()) {
+		auto segments = splitPath(strCmd);
+		if (relative)m_currentNode->navigate(segments, m_currentNode, args, true);
+		else {
+			MenuNode* pRoot = &m_root;
+			m_currentNode->navigate(segments, pRoot, args, true);
+		}
+	}
 }
 
 void ConsoleMenu::run() {
@@ -299,7 +326,7 @@ void ConsoleMenu::run() {
 
 		if (!input.empty()) {
 			auto segments = splitPath(strCmd);
-			m_currentNode->navigate(segments, m_currentNode, args);
+			m_currentNode->navigate(segments, m_currentNode, args, false);
 		}
 		else continue;
 	nextLoop:

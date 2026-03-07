@@ -1,8 +1,11 @@
-﻿#include "HttpConnect.h"
+﻿#include <cstring>
+#include <cerrno>
+#include <ws2tcpip.h>
+#include <winsock2.h>
+
+#include "HttpConnect.h"
 #include "StrConvert.h"
 #include "Logger.h"
-#include <cstring>
-#include <cerrno>
 #pragma comment(lib,"ws2_32.lib")
 using namespace WinUtils;
 using namespace std;

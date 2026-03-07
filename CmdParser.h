@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <cctype>
 #include <string_view>
+
 #include "WinUtilsDef.h"
 
 using ParserData = std::map<WinUtils::string_t, std::vector<WinUtils::string_t>>;

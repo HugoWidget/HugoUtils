@@ -1,5 +1,6 @@
-#include "HugoArt.h"
 #include <iostream>
+
+#include "HugoArt.h"
 using namespace std;
 const vector<wstring> hugo_progs_arts[] = {
 {

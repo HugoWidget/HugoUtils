@@ -1,9 +1,10 @@
 ﻿#pragma once
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include <Windows.h>
+
 #include <string>
 #include <iostream>
 #include <sstream> 
+
 #include "WinUtilsDef.h"
 class WinUtils::HttpConnect {
 public:

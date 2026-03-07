@@ -74,4 +74,7 @@ namespace WinUtils {
 	class INIGenerator;
 	class INIWriter;
 	class INIFile;
+
+	class RegException;
+	class RegResult;
 }

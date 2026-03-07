@@ -1,8 +1,9 @@
 #pragma once
 #include <Windows.h>
-#include <string>
-#include "WinUtilsDef.h"
 
+#include <string>
+
+#include "WinUtilsDef.h"
 namespace WinUtils {
 
 	class WinSvcMgr {

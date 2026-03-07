@@ -1,10 +1,10 @@
-#pragma once
-#include "Injector.h"
-#include "WinUtils.h"
-#include "Logger.h"
 #include <algorithm>
 #include <format>
 #include <filesystem>
+
+#include "Injector.h"
+#include "WinUtils.h"
+#include "Logger.h"
 #include "StrConvert.h"
 using namespace std;
 using namespace WinUtils;

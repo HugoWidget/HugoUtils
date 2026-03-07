@@ -1,6 +1,8 @@
 #pragma once
-#include<iostream>
 #include<Windows.h>
+
+#include<iostream>
+
 #include"WinUtilsDef.h"
 class WinUtils::Console
 {

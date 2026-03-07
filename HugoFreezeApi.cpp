@@ -1,9 +1,11 @@
-#include "HugoFreezeApi.h"
-#include "Logger.h"
+#include <Windows.h>
+
 #include <format>
 #include <cwctype>
-#include <windows.h>
 #include <algorithm>
+
+#include "HugoFreezeApi.h"
+#include "Logger.h"
 using namespace WinUtils;
 using namespace std;
 static Logger logger(L"HugoFreezeApi");

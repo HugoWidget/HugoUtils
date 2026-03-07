@@ -1,8 +1,9 @@
 #pragma once
-#include <cstdint>
-#include <wchar.h>
-#include <string>
 #include <Windows.h>
+
+#include <cstdint>
+#include <string>
+
 #include "HugoFreezeInterface.h"
 
 // Driver runtime status structure

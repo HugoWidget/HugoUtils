@@ -1,9 +1,10 @@
 #pragma once
-#include "HttpConnect.h"
-#include "Logger.h"
-#include <windows.h>
+#include <Windows.h>
 #include <string>
 #include <cstdint>
+
+#include "Logger.h"
+#include "HttpConnect.h"
 #include "HugoFreezeInterface.h"
 
 // Constant definitions

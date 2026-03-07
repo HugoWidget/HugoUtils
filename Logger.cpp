@@ -1,11 +1,12 @@
-﻿#include "Logger.h"
-#include "StrConvert.h"
-#include "WinUtils.h"
-#include <ctime>
+﻿#include <ctime>
 #include <fcntl.h>
 #include <fstream>
 #include <io.h>
 #include <iostream>
+
+#include "Logger.h"
+#include "StrConvert.h"
+#include "WinUtils.h"
 using namespace WinUtils;
 using namespace std;
 

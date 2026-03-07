@@ -1,13 +1,14 @@
 #pragma once
 #include <Windows.h>
+
 #include <tlhelp32.h>
 #include <vector>
 #include <string>
 #include <functional>
 #include <optional>
 #include <chrono>
-#include "WinUtilsDef.h"
 
+#include "WinUtilsDef.h"
 using FindProcCallback = std::function<bool(const PROCESSENTRY32W&)>;
 
 namespace WinUtils {

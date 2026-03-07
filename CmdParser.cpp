@@ -1,9 +1,10 @@
-#include "Logger.h"
-#include "CmdParser.h"
 #include <vector>
 #include <string>
 #include <ranges>
 #include <cctype>
+
+#include "Logger.h"
+#include "CmdParser.h"
 using namespace WinUtils;
 using namespace std;
 static Logger logger(TS("CmdParser"));

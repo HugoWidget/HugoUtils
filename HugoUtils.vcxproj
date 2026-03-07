@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BruteforceModel.h" />
     <ClInclude Include="CmdParser.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="ConsoleMenu.h" />
@@ -159,19 +160,19 @@
     <ClInclude Include="HugoFreezeInterface.h" />
     <ClInclude Include="HugoInfo.h" />
     <ClInclude Include="HugoMount.h" />
+    <ClInclude Include="HugoPassword.h" />
     <ClInclude Include="HugoUtils.h" />
     <ClInclude Include="ini.h" />
     <ClInclude Include="Injector.h" />
     <ClInclude Include="Logger.h" />
-    <ClInclude Include="md5.h" />
-    <ClInclude Include="Regedit.h" />
-    <ClInclude Include="sha256.h" />
+    <ClInclude Include="WinReg.h" />
     <ClInclude Include="StrConvert.h" />
     <ClInclude Include="WinSvcMgr.h" />
     <ClInclude Include="WinUtils.h" />
     <ClInclude Include="WinUtilsDef.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BruteforceModel.cpp" />
     <ClCompile Include="CmdParser.cpp" />
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="ConsoleMenu.cpp" />
@@ -190,13 +191,12 @@
     <ClCompile Include="HugoFreezeInterface.cpp" />
     <ClCompile Include="HugoInfo.cpp" />
     <ClCompile Include="HugoMount.cpp" />
+    <ClCompile Include="HugoPassword.cpp" />
     <ClCompile Include="HugoUtils.cpp" />
     <ClCompile Include="ini.cpp" />
     <ClCompile Include="Injector.cpp" />
     <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="md52.cpp" />
-    <ClCompile Include="Regedit.cpp" />
-    <ClCompile Include="sha2562.cpp" />
+    <ClCompile Include="WinReg.cpp" />
     <ClCompile Include="StrConvert.cpp" />
     <ClCompile Include="WinSvcMgr.cpp" />
     <ClCompile Include="WinUtils.cpp" />

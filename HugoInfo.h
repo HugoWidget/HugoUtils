@@ -1,8 +1,10 @@
 ﻿#pragma once
+#include <Windows.h>
+
 #include <string>
 #include <optional>
 #include <filesystem>
-#include <Windows.h>
+
 #include "WinUtils.h"
 class HugoInfo {
 public:

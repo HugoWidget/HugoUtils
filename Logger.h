@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "WinUtilsDef.h"
 #include <Windows.h>
+
 #include <format>
 #include <memory>
 #include <mutex>
@@ -11,6 +11,7 @@
 #include <functional>
 #include <set>
 
+#include "WinUtilsDef.h"
 namespace WinUtils {
 	using LoggerInitProc = void(Logger& logger);
 	inline const char_t* DftLogger = TS("Default");

@@ -1,14 +1,16 @@
+#include <ShlObj.h>
+#include <format>
+#include <thread>
+#include <algorithm>
+#include <ranges>
+
 #include "WinUtils.h"
 #include "Logger.h"
 #include "StrConvert.h"
 #if USE_HASHLIB
 #include "hashlib/md5.h"
 #endif
-#include <ShlObj.h>
-#include <format>
-#include <thread>
-#include <algorithm>
-#include <ranges>
+
 using namespace std;
 using namespace WinUtils;
 constexpr const wchar_t* MONITOR_WND_CLASS = L"WinUtils_ProcessMonitor_Class";
