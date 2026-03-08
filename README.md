@@ -22,3 +22,5 @@ Visual Studio 2022
 
 本项目采用 GPLv3 许可证，详情参见 LICENSE 文件。
 
+[swhelper](https://s3.fan/2025/11/25/SWHelper%E5%B8%8C%E6%B2%83%E4%BF%AE%E6%94%B9%E5%B7%A5%E5%85%B7%E5%AE%89%E8%A3%85%E5%8F%8A%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/) ：SWHelper希沃修改工具([MIT 许可证](LICENSE-MIT)) 
+
