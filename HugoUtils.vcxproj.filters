@@ -5,199 +5,222 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="源文件\WinUtils">
+      <UniqueIdentifier>{101abbb2-e620-43d6-9e2c-ba1603c480ec}</UniqueIdentifier>
+    </Filter>
     <Filter Include="头文件">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+      <UniqueIdentifier>{cfd561c9-7f38-47e9-897e-efe448bc796d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\hashlib">
-      <UniqueIdentifier>{58f93f8c-e49f-44d6-a391-b4647a8de686}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="源文件\hashlib">
-      <UniqueIdentifier>{b4aab6ee-bbdb-4a03-af08-d536e03469a8}</UniqueIdentifier>
+    <Filter Include="头文件\WinUtils">
+      <UniqueIdentifier>{b166fb07-63da-4eb7-8925-1b35fb49a645}</UniqueIdentifier>
     </Filter>
     <Filter Include="头文件\httplib">
-      <UniqueIdentifier>{2bd007c6-b84a-4b91-bb73-5569f649498a}</UniqueIdentifier>
+      <UniqueIdentifier>{68153cb5-ebea-4f01-a97e-1338ed0dc1b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\hashlib">
+      <UniqueIdentifier>{e238e3ba-07fd-4a78-9369-0902a0fa2507}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\hashlib">
+      <UniqueIdentifier>{fa8ffe66-e43d-41db-84db-44092446dcac}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Injector.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HttpConnect.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HugoInfo.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WinSvcMgr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WinUtils.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Console.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CmdParser.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HugoUtils.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Logger.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WinUtilsDef.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="StrConvert.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HugoArt.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ConsoleMenu.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="GPL3.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HugoFreezeDriver.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HugoMount.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HugoFreezeApi.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WinReg.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="hashlib\crc32.h">
-      <Filter>头文件\hashlib</Filter>
-    </ClInclude>
-    <ClInclude Include="hashlib\hash.h">
-      <Filter>头文件\hashlib</Filter>
-    </ClInclude>
-    <ClInclude Include="hashlib\hmac.h">
-      <Filter>头文件\hashlib</Filter>
-    </ClInclude>
-    <ClInclude Include="hashlib\keccak.h">
-      <Filter>头文件\hashlib</Filter>
-    </ClInclude>
-    <ClInclude Include="hashlib\md5.h">
-      <Filter>头文件\hashlib</Filter>
-    </ClInclude>
-    <ClInclude Include="hashlib\sha1.h">
-      <Filter>头文件\hashlib</Filter>
-    </ClInclude>
-    <ClInclude Include="hashlib\sha3.h">
-      <Filter>头文件\hashlib</Filter>
-    </ClInclude>
-    <ClInclude Include="hashlib\sha256.h">
-      <Filter>头文件\hashlib</Filter>
-    </ClInclude>
-    <ClInclude Include="HugoFreezeInterface.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="httplib\httplib.h">
-      <Filter>头文件\httplib</Filter>
-    </ClInclude>
-    <ClInclude Include="ini.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="BruteforceModel.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HugoPassword.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
+    <ClCompile Include="src\HugoUtils\BruteforceModel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\GPL3.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoArt.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoFreezeApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoFreezeDriver.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoFreezeInterface.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoInfo.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoInstaller.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoMount.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoPassword.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\AWDef.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\CmdParser.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\Console.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\ConsoleMenu.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\HttpConnect.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\ini.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\Injector.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\Logger.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\StrConvert.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\WinReg.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\WinSvcMgr.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinUtils\WinUtils.cpp">
+      <Filter>源文件\WinUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hashlib\crc32.cpp">
+      <Filter>源文件\hashlib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hashlib\digest.cpp">
+      <Filter>源文件\hashlib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hashlib\keccak.cpp">
+      <Filter>源文件\hashlib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hashlib\md5.cpp">
+      <Filter>源文件\hashlib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hashlib\sha1.cpp">
+      <Filter>源文件\hashlib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hashlib\sha3.cpp">
+      <Filter>源文件\hashlib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hashlib\sha256.cpp">
+      <Filter>源文件\hashlib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Injector.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="HttpConnect.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="HugoInfo.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="WinSvcMgr.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="WinUtils.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Console.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CmdParser.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="HugoUtils.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="StrConvert.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="HugoArt.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ConsoleMenu.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="GPL3.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="HugoFreezeDriver.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="HugoMount.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="HugoFreezeApi.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="WinReg.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="hashlib\crc32.cpp">
-      <Filter>源文件\hashlib</Filter>
-    </ClCompile>
-    <ClCompile Include="hashlib\digest.cpp">
-      <Filter>源文件\hashlib</Filter>
-    </ClCompile>
-    <ClCompile Include="hashlib\keccak.cpp">
-      <Filter>源文件\hashlib</Filter>
-    </ClCompile>
-    <ClCompile Include="hashlib\md5.cpp">
-      <Filter>源文件\hashlib</Filter>
-    </ClCompile>
-    <ClCompile Include="hashlib\sha1.cpp">
-      <Filter>源文件\hashlib</Filter>
-    </ClCompile>
-    <ClCompile Include="hashlib\sha3.cpp">
-      <Filter>源文件\hashlib</Filter>
-    </ClCompile>
-    <ClCompile Include="hashlib\sha256.cpp">
-      <Filter>源文件\hashlib</Filter>
-    </ClCompile>
-    <ClCompile Include="HugoFreezeInterface.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ini.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="BruteforceModel.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="HugoPassword.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
+    <ClInclude Include="include\HugoUtils\BruteforceModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\GPL3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoArt.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreezeApi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreezeDriver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreezeInterface.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoInfo.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoInstaller.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoMount.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoPassword.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoUtilsDef.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\httplib\httplib.h">
+      <Filter>头文件\httplib</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\AWDef.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\CmdParser.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\Console.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\ConsoleMenu.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\HttpConnect.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\INI.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\Injector.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\Logger.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\StrConvert.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\WinPch.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\WinReg.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\WinSvcMgr.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\WinUtils.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinUtils\WinUtilsDef.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hashlib\crc32.h">
+      <Filter>头文件\hashlib</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hashlib\hash.h">
+      <Filter>头文件\hashlib</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hashlib\hmac.h">
+      <Filter>头文件\hashlib</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hashlib\keccak.h">
+      <Filter>头文件\hashlib</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hashlib\md5.h">
+      <Filter>头文件\hashlib</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hashlib\sha1.h">
+      <Filter>头文件\hashlib</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hashlib\sha3.h">
+      <Filter>头文件\hashlib</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hashlib\sha256.h">
+      <Filter>头文件\hashlib</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

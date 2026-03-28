@@ -18,6 +18,75 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\hashlib\crc32.cpp" />
+    <ClCompile Include="src\hashlib\digest.cpp" />
+    <ClCompile Include="src\hashlib\keccak.cpp" />
+    <ClCompile Include="src\hashlib\md5.cpp" />
+    <ClCompile Include="src\hashlib\sha1.cpp" />
+    <ClCompile Include="src\hashlib\sha256.cpp" />
+    <ClCompile Include="src\hashlib\sha3.cpp" />
+    <ClCompile Include="src\HugoUtils\BruteforceModel.cpp" />
+    <ClCompile Include="src\HugoUtils\GPL3.cpp" />
+    <ClCompile Include="src\HugoUtils\HugoArt.cpp" />
+    <ClCompile Include="src\HugoUtils\HugoFreezeApi.cpp" />
+    <ClCompile Include="src\HugoUtils\HugoFreezeDriver.cpp" />
+    <ClCompile Include="src\HugoUtils\HugoFreezeInterface.cpp" />
+    <ClCompile Include="src\HugoUtils\HugoInfo.cpp" />
+    <ClCompile Include="src\HugoUtils\HugoInstaller.cpp" />
+    <ClCompile Include="src\HugoUtils\HugoMount.cpp" />
+    <ClCompile Include="src\HugoUtils\HugoPassword.cpp" />
+    <ClCompile Include="src\HugoUtils\HugoUtils.cpp" />
+    <ClCompile Include="src\WinUtils\AWDef.cpp" />
+    <ClCompile Include="src\WinUtils\CmdParser.cpp" />
+    <ClCompile Include="src\WinUtils\Console.cpp" />
+    <ClCompile Include="src\WinUtils\ConsoleMenu.cpp" />
+    <ClCompile Include="src\WinUtils\HttpConnect.cpp" />
+    <ClCompile Include="src\WinUtils\ini.cpp" />
+    <ClCompile Include="src\WinUtils\Injector.cpp" />
+    <ClCompile Include="src\WinUtils\Logger.cpp" />
+    <ClCompile Include="src\WinUtils\StrConvert.cpp" />
+    <ClCompile Include="src\WinUtils\WinReg.cpp" />
+    <ClCompile Include="src\WinUtils\WinSvcMgr.cpp" />
+    <ClCompile Include="src\WinUtils\WinUtils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\hashlib\crc32.h" />
+    <ClInclude Include="include\hashlib\hash.h" />
+    <ClInclude Include="include\hashlib\hmac.h" />
+    <ClInclude Include="include\hashlib\keccak.h" />
+    <ClInclude Include="include\hashlib\md5.h" />
+    <ClInclude Include="include\hashlib\sha1.h" />
+    <ClInclude Include="include\hashlib\sha256.h" />
+    <ClInclude Include="include\hashlib\sha3.h" />
+    <ClInclude Include="include\HugoUtils\BruteforceModel.h" />
+    <ClInclude Include="include\HugoUtils\GPL3.h" />
+    <ClInclude Include="include\HugoUtils\httplib\httplib.h" />
+    <ClInclude Include="include\HugoUtils\HugoArt.h" />
+    <ClInclude Include="include\HugoUtils\HugoFreezeApi.h" />
+    <ClInclude Include="include\HugoUtils\HugoFreezeDriver.h" />
+    <ClInclude Include="include\HugoUtils\HugoFreezeInterface.h" />
+    <ClInclude Include="include\HugoUtils\HugoInfo.h" />
+    <ClInclude Include="include\HugoUtils\HugoInstaller.h" />
+    <ClInclude Include="include\HugoUtils\HugoMount.h" />
+    <ClInclude Include="include\HugoUtils\HugoPassword.h" />
+    <ClInclude Include="include\HugoUtils\HugoUtils.h" />
+    <ClInclude Include="include\HugoUtils\HugoUtilsDef.h" />
+    <ClInclude Include="include\WinUtils\AWDef.h" />
+    <ClInclude Include="include\WinUtils\CmdParser.h" />
+    <ClInclude Include="include\WinUtils\Console.h" />
+    <ClInclude Include="include\WinUtils\ConsoleMenu.h" />
+    <ClInclude Include="include\WinUtils\HttpConnect.h" />
+    <ClInclude Include="include\WinUtils\ini.h" />
+    <ClInclude Include="include\WinUtils\Injector.h" />
+    <ClInclude Include="include\WinUtils\Logger.h" />
+    <ClInclude Include="include\WinUtils\StrConvert.h" />
+    <ClInclude Include="include\WinUtils\WinPch.h" />
+    <ClInclude Include="include\WinUtils\WinReg.h" />
+    <ClInclude Include="include\WinUtils\WinSvcMgr.h" />
+    <ClInclude Include="include\WinUtils\WinUtils.h" />
+    <ClInclude Include="include\WinUtils\WinUtilsDef.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -79,6 +148,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Program Files\OpenSSL-Win64\include;$(ProjectDir)include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -97,6 +167,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Program Files\OpenSSL-Win64\include;$(ProjectDir)include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -113,6 +184,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Program Files\OpenSSL-Win64\include;$(ProjectDir)include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -131,6 +203,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Program Files\OpenSSL-Win64\include;$(ProjectDir)include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -138,69 +211,6 @@
       <EnableUAC>false</EnableUAC>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="BruteforceModel.h" />
-    <ClInclude Include="CmdParser.h" />
-    <ClInclude Include="Console.h" />
-    <ClInclude Include="ConsoleMenu.h" />
-    <ClInclude Include="GPL3.h" />
-    <ClInclude Include="hashlib\crc32.h" />
-    <ClInclude Include="hashlib\hash.h" />
-    <ClInclude Include="hashlib\hmac.h" />
-    <ClInclude Include="hashlib\keccak.h" />
-    <ClInclude Include="hashlib\md5.h" />
-    <ClInclude Include="hashlib\sha1.h" />
-    <ClInclude Include="hashlib\sha256.h" />
-    <ClInclude Include="hashlib\sha3.h" />
-    <ClInclude Include="HttpConnect.h" />
-    <ClInclude Include="httplib\httplib.h" />
-    <ClInclude Include="HugoArt.h" />
-    <ClInclude Include="HugoFreezeApi.h" />
-    <ClInclude Include="HugoFreezeDriver.h" />
-    <ClInclude Include="HugoFreezeInterface.h" />
-    <ClInclude Include="HugoInfo.h" />
-    <ClInclude Include="HugoMount.h" />
-    <ClInclude Include="HugoPassword.h" />
-    <ClInclude Include="HugoUtils.h" />
-    <ClInclude Include="ini.h" />
-    <ClInclude Include="Injector.h" />
-    <ClInclude Include="Logger.h" />
-    <ClInclude Include="WinReg.h" />
-    <ClInclude Include="StrConvert.h" />
-    <ClInclude Include="WinSvcMgr.h" />
-    <ClInclude Include="WinUtils.h" />
-    <ClInclude Include="WinUtilsDef.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="BruteforceModel.cpp" />
-    <ClCompile Include="CmdParser.cpp" />
-    <ClCompile Include="Console.cpp" />
-    <ClCompile Include="ConsoleMenu.cpp" />
-    <ClCompile Include="GPL3.cpp" />
-    <ClCompile Include="hashlib\crc32.cpp" />
-    <ClCompile Include="hashlib\digest.cpp" />
-    <ClCompile Include="hashlib\keccak.cpp" />
-    <ClCompile Include="hashlib\md5.cpp" />
-    <ClCompile Include="hashlib\sha1.cpp" />
-    <ClCompile Include="hashlib\sha256.cpp" />
-    <ClCompile Include="hashlib\sha3.cpp" />
-    <ClCompile Include="HttpConnect.cpp" />
-    <ClCompile Include="HugoArt.cpp" />
-    <ClCompile Include="HugoFreezeApi.cpp" />
-    <ClCompile Include="HugoFreezeDriver.cpp" />
-    <ClCompile Include="HugoFreezeInterface.cpp" />
-    <ClCompile Include="HugoInfo.cpp" />
-    <ClCompile Include="HugoMount.cpp" />
-    <ClCompile Include="HugoPassword.cpp" />
-    <ClCompile Include="HugoUtils.cpp" />
-    <ClCompile Include="ini.cpp" />
-    <ClCompile Include="Injector.cpp" />
-    <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="WinReg.cpp" />
-    <ClCompile Include="StrConvert.cpp" />
-    <ClCompile Include="WinSvcMgr.cpp" />
-    <ClCompile Include="WinUtils.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
