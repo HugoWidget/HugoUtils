@@ -17,24 +17,37 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "WinUtils/WinPch.h"
-
+#include "HugoUtilsDef.h"
+#ifndef HU_DISABLE_INFO
 #include <Windows.h>
-
 #include <string>
 #include <optional>
+#include <vector>
 #include <filesystem>
 
-#include "WinUtils/WinUtils.h"
 class HugoInfo {
 public:
     std::optional<std::wstring> getHugoVersion();
     std::optional<std::wstring> getHugoFolder();
     std::optional<std::wstring> getHugoProtectDriverFolder();
     std::optional<std::wstring> getHugoProtectDriverPath();
+    std::vector<std::wstring> getHugoUpdateFolder();
+
 private:
-    static std::optional<std::filesystem::path> FindSpecificDir(
+    static inline const std::filesystem::path SEEWO_SERVICE_BASE = L"C:\\Program Files (x86)\\Seewo\\SeewoService";
+    static inline const std::wstring_view SEEWO_SERVICE_PREFIX = L"SeewoService_";
+    static inline const std::filesystem::path EASIUPDATE_BASE = L"C:\\ProgramData\\Seewo\\Easiupdate3";
+    static inline const std::wstring_view EASIUPDATE_PREFIX = L"Easiupdate3";
+
+    static std::optional<std::filesystem::path> FindFirstDirectory(
         const std::filesystem::path& baseDir,
         std::wstring_view prefix
     );
+
+    static std::vector<std::filesystem::path> FindAllDirectories(
+        const std::filesystem::path& baseDir,
+        std::wstring_view prefix
+    );
+    static std::optional<std::wstring> ExtractVersionFromDirName(const std::filesystem::path& dirPath);
 };
+#endif // !HU_DISABLE_INFO

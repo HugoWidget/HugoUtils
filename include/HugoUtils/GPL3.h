@@ -17,6 +17,9 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "HugoUtilsDef.h"
+#ifndef HU_DISABLE_GPL3
 #include <iostream>
 void ShowWarranty(); 
 void ShowLicense(const wchar_t* licensePath);
+#endif // !HU_DISABLE_GPL3

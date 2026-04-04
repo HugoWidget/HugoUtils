@@ -16,7 +16,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
-#include "WinUtils/WinPch.h"
+#include "HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_PASSWORD
 
 #include "HugoUtils/BruteforceModel.h"
 
@@ -42,3 +43,4 @@ std::vector<CrackResult> CrackExecutor::execute(const std::vector<CrackTask>& ta
     }
     return results;
 }
+#endif // !HU_DISABLE_PASSWORD

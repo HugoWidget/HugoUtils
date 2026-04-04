@@ -17,6 +17,8 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "HugoUtilsDef.h"
+#ifndef HU_DISABLE_PASSWORD
 
 #include <string>
 #include <vector>
@@ -62,3 +64,4 @@ public:
     bool canHandle(const CrackTask& task) const override;
     std::string decrypt(const CrackTask& task) override;
 };
+#endif // !HU_DISABLE_PASSWORD

@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
+#include "HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_MOUNT
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -623,3 +625,4 @@ void HugoMount::PrintFormattedSize(long long sectors) const {
 	double sizeMB = static_cast<double>(sectors * 512) / (1024 * 1024);
 	cout << setw(10) << sectors << " (" << fixed << setprecision(0) << setw(6) << sizeMB << " MB)";
 }
+#endif // !HU_DISABLE_MOUNT

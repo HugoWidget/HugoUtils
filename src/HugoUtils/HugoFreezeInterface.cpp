@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
+#include "HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_FREEZE
 #include "HugoUtils/HugoFreezeInterface.h"
 using namespace std;
 uint32_t CalculateVolumeMask(const wstring& driveLetters)noexcept {
@@ -58,3 +60,4 @@ FreezeResult& FreezeResult::setOperateTime(const wstring& time) {
 	this->operateTime = time;
 	return *this;
 }
+#endif // !HU_DISABLE_FREEZE

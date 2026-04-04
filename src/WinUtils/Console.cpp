@@ -71,6 +71,7 @@ void Console::setLocale()
 {
 	std::wcin.imbue(std::locale(""));
 	std::wcout.imbue(std::locale(""));
+	std::wcerr.imbue(std::locale(""));
 	/*
 	SetConsoleCP(CP_UTF8);
 	SetConsoleOutputCP(CP_UTF8);

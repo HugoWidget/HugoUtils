@@ -18,8 +18,7 @@
  */
 #pragma once
 #include "HugoUtils/HugoUtilsDef.h"
-
-#if HU_INSTALLER
+#ifndef HU_DISABLE_INSTALLER
 
 #include <string>
 #include <functional>
@@ -79,4 +78,4 @@ private:
     std::string extractFilenameFromRedirectUrl(const std::string& url);
 };
 
-#endif // HU_INSTALLER
+#endif // !HU_DISABLE_INSTALLER

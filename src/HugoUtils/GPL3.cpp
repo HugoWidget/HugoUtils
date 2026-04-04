@@ -16,7 +16,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
-#include "WinUtils/WinPch.h"
+#include "HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_GPL3
 
 #include <Windows.h>
 
@@ -78,3 +79,4 @@ void ShowLicense(const wchar_t* licensePath) {
 
 	licenseFile.close();
 }
+#endif // !HU_DISABLE_GPL3

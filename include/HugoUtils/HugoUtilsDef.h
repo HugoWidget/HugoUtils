@@ -17,4 +17,31 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#define HU_INSTALLER 1
+ // #define HU_DISABLE_ALL
+ // #define HU_DISABLE_ART
+ // #define HU_DISABLE_GPL3
+ // #define HU_DISABLE_INFO
+ // #define HU_DISABLE_PASSWORD
+ // #define HU_DISABLE_FREEZE
+ // #define HU_DISABLE_FREEZE_API
+ // #define HU_DISABLE_FREEZE_DRIVER
+ // #define HU_DISABLE_MOUNT
+ // #define HU_DISABLE_INSTALLER
+#include "WinUtils/WinPch.h"
+
+#ifdef HU_DISABLE_ALL
+#define HU_DISABLE_ALL
+#define HU_DISABLE_ART
+#define HU_DISABLE_GPL3
+#define HU_DISABLE_INFO
+#define HU_DISABLE_PASSWORD
+#define HU_DISABLE_FREEZE
+#define HU_DISABLE_MOUNT
+#define HU_DISABLE_INSTALLER
+#endif
+
+#ifdef HU_DISABLE_FREEZE
+#define HU_DISABLE_FREEZE_API
+#define HU_DISABLE_FREEZE_DRIVER
+#endif
+

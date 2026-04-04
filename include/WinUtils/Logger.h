@@ -132,7 +132,7 @@ namespace WinUtils {
 		void Error(string_view_t msg) noexcept { Log(LogLevel::Error, msg); }
 		void Log(LogLevel level, string_view_t msg)const noexcept;
 		void DLog(LogLevel level, string_view_t msg)const noexcept {
-#if WU_DEBUG
+#ifdef WU_DEBUG
 			Log(level, msg);
 #endif
 		};
@@ -151,7 +151,7 @@ namespace WinUtils {
 		WinUtils::LoggerCore::Inst().GetDefaultLogger().Log(level, msg);
 	};
 	inline void WuDebug(LogLevel level, string_view_t msg) noexcept {
-#if WU_DEBUG
+#ifdef WU_DEBUG
 		WinUtils::LoggerCore::Inst().GetDefaultLogger().Log(level, msg);
 #endif
 	};

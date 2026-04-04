@@ -16,7 +16,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
-#include "WinUtils/WinPch.h"
+#include "HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_PASSWORD
 
 #include <Windows.h>
 #include <shlobj.h>
@@ -231,3 +232,4 @@ std::string V3Decryptor::decrypt(const CrackTask& task) {
 
     return bruteForce(salt, partB);
 }
+#endif // !HU_DISABLE_PASSWORD

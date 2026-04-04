@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
+#include"HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_ART
 #include <iostream>
 
 #include "HugoUtils/HugoArt.h"
@@ -47,3 +49,4 @@ void HugoArt::PrintArtText(int idx)
 		wcout << line << std::endl;
 	}
 }
+#endif // !HU_DISABLE_ART

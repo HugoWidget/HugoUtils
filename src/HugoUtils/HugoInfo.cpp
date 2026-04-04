@@ -16,94 +16,127 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
-#include "WinUtils/WinPch.h"
+#include "HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_INFO
 
-#include <Windows.h>
 
 #include <iostream>
-#include <filesystem>
 #include <string_view>
 #include <optional>
 
 #include "HugoUtils/HugoInfo.h"
 #include "WinUtils/StrConvert.h"
 #include "WinUtils/Logger.h"
-using namespace WinUtils;
 using namespace std;
+using namespace WinUtils;
 namespace fs = std::filesystem;
+
 static Logger logger(L"HugoInfo");
 
-std::optional<std::wstring> HugoInfo::getHugoProtectDriverFolder()
+optional<fs::path> HugoInfo::FindFirstDirectory(
+    const fs::path& baseDir,
+    wstring_view prefix)
 {
-	auto hugoFolder = getHugoFolder();
-	if (!hugoFolder)
-		return std::nullopt;
-	fs::path driverFolder = *hugoFolder + L"SeewoDriverService";
-	if (!fs::is_directory(driverFolder))
-		return std::nullopt;
-	return driverFolder.wstring() + L'\\';
+    try {
+        for (const auto& entry : fs::directory_iterator(baseDir)) {
+            if (entry.is_directory()) {
+                const auto& dirName = entry.path().filename().wstring();
+                if (dirName.compare(0, prefix.size(), prefix) == 0) {
+                    return entry.path();
+                }
+            }
+        }
+    }
+    catch (const fs::filesystem_error& e) {
+        logger.Error(format(L"Failed to enumerate directory {}: {}",
+            baseDir.wstring(), ConvertString<wstring>(e.what())));
+    }
+    return nullopt;
 }
 
-std::optional<std::wstring> HugoInfo::getHugoProtectDriverPath()
+vector<fs::path> HugoInfo::FindAllDirectories(
+    const fs::path& baseDir,
+    wstring_view prefix)
 {
-	auto driverFolder = getHugoProtectDriverFolder();
-	if (!driverFolder)
-		return std::nullopt;
-	fs::path driverPath = *driverFolder + L"DriverService.exe";
-	if (!fs::is_regular_file(driverPath))
-		return std::nullopt;
-	return driverPath.wstring();
+    vector<fs::path> result;
+    try {
+        for (const auto& entry : fs::directory_iterator(baseDir)) {
+            if (entry.is_directory()) {
+                const auto& dirName = entry.path().filename().wstring();
+                if (dirName.compare(0, prefix.size(), prefix) == 0) {
+                    result.push_back(entry.path());
+                }
+            }
+        }
+    }
+    catch (const fs::filesystem_error& e) {
+        logger.Error(format(L"Failed to enumerate directory {}: {}",
+            baseDir.wstring(), ConvertString<wstring>(e.what())));
+    }
+    return result;
 }
 
-std::optional<fs::path> HugoInfo::FindSpecificDir(
-	const fs::path& baseDir,
-	std::wstring_view prefix
-) {
-	try {
-		for (const auto& entry : fs::directory_iterator(baseDir)) {
-			if (entry.is_directory()) {
-				const auto& dirName = entry.path().filename().wstring();
-				if (dirName.compare(0, prefix.size(), prefix) == 0) {
-					return entry.path();
-				}
-			}
-		}
-	}
-	catch (const fs::filesystem_error& e) {
-		logger.Error(format(L"Failed to find directory:{}", ConvertString<wstring>(e.what())));
-	}
-
-	return std::nullopt;
+optional<wstring> HugoInfo::ExtractVersionFromDirName(const fs::path& dirPath)
+{
+    wstring dirName = dirPath.filename().wstring();
+    size_t underscorePos = dirName.find(L'_');
+    if (underscorePos != wstring::npos && underscorePos + 1 < dirName.size()) {
+        return dirName.substr(underscorePos + 1);
+    }
+    return nullopt;
 }
 
-std::optional<std::wstring> HugoInfo::getHugoVersion() {
-	const fs::path baseDir = L"C:\\Program Files (x86)\\Seewo\\SeewoService";
-	constexpr std::wstring_view prefix = L"SeewoService_";
-
-	auto foundPath = FindSpecificDir(baseDir, prefix);
-	if (!foundPath) {
-		logger.Warn(format(L"SeewoService directory not found"));
-		return std::nullopt;
-	}
-
-	std::wstring dirName = foundPath->filename().wstring();
-	size_t underscorePos = dirName.find(L'_');
-	if (underscorePos != std::wstring::npos && underscorePos + 1 < dirName.size()) {
-		return dirName.substr(underscorePos + 1);
-	}
-
-	return std::nullopt;
+optional<wstring> HugoInfo::getHugoVersion()
+{
+    auto foundDir = FindFirstDirectory(SEEWO_SERVICE_BASE, SEEWO_SERVICE_PREFIX);
+    if (!foundDir) {
+        logger.Warn(L"SeewoService directory not found");
+        return nullopt;
+    }
+    return ExtractVersionFromDirName(*foundDir);
 }
 
-std::optional<std::wstring> HugoInfo::getHugoFolder() {
-	const fs::path baseDir = L"C:\\Program Files (x86)\\Seewo\\SeewoService";
-	constexpr std::wstring_view prefix = L"SeewoService_";
-
-	auto foundPath = FindSpecificDir(baseDir, prefix);
-	if (!foundPath) {
-		logger.Warn(format(L"SeewoService directory not found"));
-		return std::nullopt;
-	}
-
-	return foundPath->wstring() + L'\\';
+optional<wstring> HugoInfo::getHugoFolder()
+{
+    auto foundDir = FindFirstDirectory(SEEWO_SERVICE_BASE, SEEWO_SERVICE_PREFIX);
+    if (!foundDir) {
+        logger.Warn(L"SeewoService directory not found");
+        return nullopt;
+    }
+    // 返回目录路径并以反斜杠结尾（保持与原行为一致）
+    return foundDir->wstring() + L'\\';
 }
+
+optional<wstring> HugoInfo::getHugoProtectDriverFolder()
+{
+    auto hugoFolder = getHugoFolder();
+    if (!hugoFolder) return nullopt;
+
+    fs::path driverFolder = fs::path(*hugoFolder) / L"SeewoDriverService";
+    if (!fs::is_directory(driverFolder)) return nullopt;
+
+    return driverFolder.wstring() + L'\\';
+}
+
+optional<wstring> HugoInfo::getHugoProtectDriverPath()
+{
+    auto driverFolder = getHugoProtectDriverFolder();
+    if (!driverFolder) return nullopt;
+
+    fs::path driverPath = fs::path(*driverFolder) / L"DriverService.exe";
+    if (!fs::is_regular_file(driverPath)) return nullopt;
+
+    return driverPath.wstring();
+}
+
+vector<wstring> HugoInfo::getHugoUpdateFolder()
+{
+    auto dirs = FindAllDirectories(EASIUPDATE_BASE, EASIUPDATE_PREFIX);
+    vector<wstring> result;
+    result.reserve(dirs.size());
+    for (const auto& d : dirs) {
+        result.push_back(d.wstring() + L'\\');
+    }
+    return result;
+}
+#endif // !HU_DISABLE_INFO

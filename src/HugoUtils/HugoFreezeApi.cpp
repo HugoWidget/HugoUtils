@@ -16,7 +16,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
-#include "WinUtils/WinPch.h"
+#include "HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_FREEZE_API
 
 #include <Windows.h>
 
@@ -145,3 +146,4 @@ DWORD HugoFreezeApi::GetLastErrorCode() const noexcept {
 HugoFreezeApi::HugoFreezeApi() noexcept {
 	m_httpClient.setPort(m_port);
 }
+#endif // !HU_DISABLE_FREEZE_API

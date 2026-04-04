@@ -17,6 +17,8 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "HugoUtilsDef.h"
+#ifndef HU_DISABLE_ART
 #include<string>
 #include<vector>
 class HugoArt
@@ -25,4 +27,4 @@ public:
 	static const std::vector<std::wstring> GetHugoArtText(int idx);
 	static void PrintArtText(int idx);
 };
-
+#endif // !HU_DISABLE_ART

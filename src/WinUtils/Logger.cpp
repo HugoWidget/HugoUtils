@@ -45,7 +45,7 @@ void FileLogStrategy::Output(LogLevel /*level*/,
 	string str = ConvertString<string>((string_t)formatted_log) + '\n';
 	FILE* f = 0;
 	try {
-#if WU_WIDE_STRING
+#ifndef WU_NARROW_STRING
 		_wfopen_s(&f, m_logPath.c_str(), L"a");
 #else
 		fopen_s(&f, m_logPath.c_str(), "a");

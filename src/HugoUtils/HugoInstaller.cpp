@@ -16,10 +16,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
-#include "HugoUtils/HugoInstaller.h"
-#if HU_INSTALLER
-
-#include "WinUtils/WinPch.h"
+#include "HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_INSTALLER
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -35,6 +33,7 @@
 #include "WinUtils/StrConvert.h"
 #include "WinUtils/WinUtils.h"
 
+#include "HugoUtils/HugoInstaller.h"
 using namespace std;
 using namespace WinUtils;
 
@@ -226,4 +225,4 @@ string HttpDownloader::extractFilenameFromRedirectUrl(const string& url) {
     return getFilenameFromDisposition(decodedValue);
 }
 
-#endif // HU_INSTALLER
+#endif // !HU_DISABLE_INSTALLER

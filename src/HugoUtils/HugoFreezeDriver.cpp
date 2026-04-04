@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
+#include "HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_FREEZE_DRIVER
+
 #include <fstream>
 #include <format>
 #include <algorithm>
@@ -237,4 +240,4 @@ std::wstring HugoFreezeDriver::GetLastErrorMsg() const noexcept {
 DWORD HugoFreezeDriver::GetLastErrorCode() const noexcept {
 	return 0;
 }
-
+#endif // !HU_DISABLE_FREEZE_DRIVER

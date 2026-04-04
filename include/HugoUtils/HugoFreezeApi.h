@@ -17,7 +17,9 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "WinUtils/WinPch.h"
+#include "HugoUtilsDef.h"
+#ifndef HU_DISABLE_FREEZE_API
+
 
 #include <Windows.h>
 #include <string>
@@ -63,3 +65,4 @@ private:
     uint16_t m_port{ DEFAULT_PORT };          // Target port
     WinUtils::HttpConnect m_httpClient;       // HTTP client instance
 };
+#endif // !HU_DISABLE_FREEZE_API

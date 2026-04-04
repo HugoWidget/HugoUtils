@@ -17,6 +17,8 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "HugoUtils/HugoUtilsDef.h"
+#ifndef HU_DISABLE_PASSWORD
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -64,3 +66,4 @@ public:
     std::vector<CrackResult> execute(const std::vector<CrackTask>& tasks,
         const std::vector<Decryptor*>& decryptors);
 };
+#endif // !HU_DISABLE_PASSWORD

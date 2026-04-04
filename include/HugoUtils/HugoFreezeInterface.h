@@ -17,7 +17,8 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "WinUtils/WinPch.h"
+#include "HugoUtilsDef.h"
+#ifndef HU_DISABLE_FREEZE
 
 #include <Windows.h>
 
@@ -87,3 +88,4 @@ public:
 };
 // return 0 if 'driveLetters' is empty, -1 if 'driveLetters' is invalid
 uint32_t CalculateVolumeMask(const std::wstring& driveLetters)noexcept;
+#endif // !HU_DISABLE_FREEZE

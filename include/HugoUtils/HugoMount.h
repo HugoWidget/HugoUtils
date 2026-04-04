@@ -17,7 +17,8 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "WinUtils/WinPch.h"
+#include "HugoUtilsDef.h"
+#ifndef HU_DISABLE_MOUNT
 
 #include <Windows.h>
 
@@ -122,3 +123,4 @@ private:
 	HugoMount(const HugoMount&) = delete;
 	HugoMount& operator=(const HugoMount&) = delete;
 };
+#endif // !HU_DISABLE_MOUNT

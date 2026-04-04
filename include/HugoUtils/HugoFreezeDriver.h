@@ -17,7 +17,8 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "WinUtils/WinPch.h"
+#include "HugoUtilsDef.h"
+#ifndef HU_DISABLE_FREEZE_DRIVER
 
 #include <Windows.h>
 
@@ -104,3 +105,4 @@ private:
 	static constexpr uint32_t OFF_RT_STATS = 0x118;
 
 };
+#endif // !HU_DISABLE_FREEZE_DRIVER
