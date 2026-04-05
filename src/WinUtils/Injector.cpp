@@ -74,27 +74,12 @@ void CleanupRemoteResources(HANDLE hProcess, LPVOID remoteMem) noexcept {
 vector<DWORD> Injector::GetProcessPIDs(const string_t& processName)
 {
 	vector<DWORD> pids;
-	HANDLE hSnapshot = CreateProcessSnapshot();
-	if (hSnapshot == INVALID_HANDLE_VALUE) {
-		logger.DLog(LogLevel::Error, TS("Failed to create process snapshot"));
-		return pids;
-	}
-
-	TF(PROCESSENTRY32) pe32 {};
-	pe32.dwSize = sizeof(TF(PROCESSENTRY32));
-
-	if (TF(Process32First)(hSnapshot, &pe32)) {
-		do {
-			if (ToLower(pe32.szExeFile) == ToLower(processName)) {
-				pids.push_back(pe32.th32ProcessID);
-			}
-		} while (TF(Process32Next)(hSnapshot, &pe32));
-	}
-	else {
-		logger.DLog(LogLevel::Error, format(TS("Failed to enumerate processes, error code: {}"), GetLastError()));
-	}
-
-	CloseHandle(hSnapshot);
+	EnumProcesses([&processName, &pids](const TF(PROCESSENTRY32)& info)->bool {
+		if (ToLower(info.szExeFile) == ToLower(processName)) {
+			pids.push_back(info.th32ProcessID);
+		}
+		return true;
+		});
 	return pids;
 }
 
@@ -339,7 +324,6 @@ void Injector::MonitorAndInject(const string_t& dllPath, const string_t& process
 	}
 	vector<DWORD> injectedPIDs;
 	logger.DLog(LogLevel::Info, format(TS("Started process monitoring: {}, inject DLL: {}, check interval: {}ms"), processName, dllPath, checkInterval));
-	logger.DLog(LogLevel::Info, TS("Press Ctrl+C to exit..."));
 
 	while (true) {
 		vector<DWORD> currentPIDs = GetProcessPIDs(processName);

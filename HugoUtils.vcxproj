@@ -37,6 +37,7 @@
     <ClCompile Include="src\HugoUtils\HugoMount.cpp" />
     <ClCompile Include="src\HugoUtils\HugoPassword.cpp" />
     <ClCompile Include="src\HugoUtils\HugoUtils.cpp" />
+    <ClCompile Include="src\HugoUtils\HugoLock.cpp" />
     <ClCompile Include="src\WinUtils\AWDef.cpp" />
     <ClCompile Include="src\WinUtils\CmdParser.cpp" />
     <ClCompile Include="src\WinUtils\Console.cpp" />
@@ -72,6 +73,7 @@
     <ClInclude Include="include\HugoUtils\HugoPassword.h" />
     <ClInclude Include="include\HugoUtils\HugoUtils.h" />
     <ClInclude Include="include\HugoUtils\HugoUtilsDef.h" />
+    <ClInclude Include="include\HugoUtils\HugoLock.h" />
     <ClInclude Include="include\WinUtils\AWDef.h" />
     <ClInclude Include="include\WinUtils\CmdParser.h" />
     <ClInclude Include="include\WinUtils\Console.h" />

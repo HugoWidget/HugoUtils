@@ -78,7 +78,7 @@ namespace WinUtils {
 			return false;
 		}
 
-		TF(PROCESSENTRY32) entry{};
+		TF(PROCESSENTRY32) entry {};
 		entry.dwSize = sizeof(TF(PROCESSENTRY32));
 
 		if (!TF(Process32First)(hSnapshot, &entry)) {
@@ -210,10 +210,28 @@ namespace WinUtils {
 
 	bool IsWindowFullScreen(HWND hWnd, int tolerance, bool relative) {
 		if (!IsWindow(hWnd)) return false;
-		tolerance = (std::max)(tolerance, 0);
 
 		RECT windowRect{};
 		if (!::GetWindowRect(hWnd, &windowRect)) return false;
+
+		int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+		int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+		int windowWidth = windowRect.right - windowRect.left;
+		int windowHeight = windowRect.bottom - windowRect.top;
+
+		return IsWindowFullScreen(windowRect.left, windowRect.top, windowWidth, windowHeight, tolerance, relative);
+	}
+
+	bool IsWindowFullScreen(int x, int y, int cx, int cy, int tolerance, bool relative) {
+		tolerance = (std::max)(tolerance, 0);
+
+		RECT windowRect{};
+		windowRect.top = y;
+		windowRect.left = x;
+		windowRect.right = x + cx;
+		windowRect.bottom = y + cy;
+
 
 		int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 		int screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -267,16 +285,36 @@ namespace WinUtils {
 		return ret && elevation.TokenIsElevated != 0;
 	}
 
+	//Directly use wide string 
 	bool RequireAdminPrivilege(bool exit) {
-		if (IsCurrentProcessAdmin()) return false;
+		if (IsCurrentProcessAdmin()) return true;
+		wchar_t path[MAX_PATH] = { 0 };
+		GetModuleFileNameW(nullptr, path, _countof(path));
+		wstring exePath = path;
+		int argc = 0;
+		LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+		if (!argv) return false;
 
-		string_t appPath = GetCurrentProcessPath();
-		HINSTANCE hResult = TF(ShellExecute)(nullptr, TS("runas"), appPath.c_str(),
-			TF(GetCommandLine)(), nullptr, SW_SHOWNORMAL);
+		wstring params;
+		for (int i = 1; i < argc; ++i) {
+			if (i > 1) params += L' ';
+			wstring arg = argv[i];
+			if (arg.find(L' ') != wstring::npos && arg.front() != L'"') {
+				params += L'"' + arg + L'"';
+			}
+			else {
+				params += arg;
+			}
+		}
+		LocalFree(argv);
 
-		if (reinterpret_cast<INT_PTR>(hResult) <= 32) return false;
-		if (exit) ExitProcess(0);
-		return true;
+		HINSTANCE hResult = ShellExecuteW(nullptr, L"runas", exePath.c_str(),
+			params.c_str(), nullptr, SW_SHOWNORMAL);
+		if (reinterpret_cast<INT_PTR>(hResult) > 32) {
+			if (exit) ExitProcess(0);
+			return true;
+		}
+		return false;
 	}
 
 	void EnsureSingleInstance(string_t title, string_t name, string_t content, string_t extraInfo) {

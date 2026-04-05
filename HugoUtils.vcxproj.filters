@@ -115,6 +115,9 @@
     <ClCompile Include="src\hashlib\sha256.cpp">
       <Filter>源文件\hashlib</Filter>
     </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoLock.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\HugoUtils\BruteforceModel.h">
@@ -221,6 +224,9 @@
     </ClInclude>
     <ClInclude Include="include\hashlib\sha256.h">
       <Filter>头文件\hashlib</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoLock.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
