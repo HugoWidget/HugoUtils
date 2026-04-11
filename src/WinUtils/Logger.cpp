@@ -28,12 +28,20 @@
 #include <fstream>
 #include <io.h>
 #include <iostream>
+#include <chrono>
 
 #include "WinUtils/Logger.h"
 #include "WinUtils/StrConvert.h"
-#include "WinUtils/WinUtils.h"
 using namespace WinUtils;
 using namespace std;
+
+string_t GetCurrentProcessDir2() {
+	char_t path[MAX_PATH] = { 0 };
+	TF(GetModuleFileName)(nullptr, path, _countof(path));
+	string_t str(path);
+	size_t pos = str.find_last_of(TS("\\/"));
+	return pos == wstring_view::npos ? TS("") : string_t(str.substr(0, pos + 1));
+}
 
 FileLogStrategy::FileLogStrategy(string_view_t log_path)
 	: m_logPath(log_path) {
@@ -122,7 +130,7 @@ void LoggerCore::ClearStrategies() noexcept {
 void LoggerCore::SetDefaultStrategies(string_view_t log_path) noexcept {
 	ClearStrategies();
 	string_t path = log_path.empty()
-		? (::GetCurrentProcessDir() + TS("log.txt"))
+		? (::GetCurrentProcessDir2() + TS("log.txt"))
 		: string_t(log_path);
 	AddStrategy<FileLogStrategy>(path);
 	AddStrategy<DebugLogStrategy>();

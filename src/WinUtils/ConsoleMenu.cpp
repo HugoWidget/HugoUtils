@@ -113,17 +113,21 @@ string_t MenuNode::getFullPath() const {
 	}
 	return path.empty() ? TS("/") : path;
 }
-
 bool MenuNode::navigate(const vector<string_t>& segments, MenuNode*& currentNode, Args& args, bool silent) {
 	MenuNode* tempNode = currentNode;
 	for (const auto& seg : segments) {
+		if (seg.empty()) {
+			if (!silent) tcerr << TS("Invalid path/command") << TS("\n");
+			if (!silent) (void)_getwch();
+			return false;
+		}
 		if (seg == TS("..")) {
 			if (tempNode->m_parent != nullptr) {
 				tempNode = tempNode->m_parent;
 			}
 			else {
-				if (!silent)wcerr << TS("Already at root menu!\n");
-				if (!silent)(void)_getwch();
+				if (!silent) wcerr << TS("Already at root menu!\n");
+				if (!silent) (void)_getwch();
 				return false;
 			}
 		}
@@ -132,20 +136,30 @@ bool MenuNode::navigate(const vector<string_t>& segments, MenuNode*& currentNode
 		}
 		else if (tempNode->m_commands.contains(seg)) {
 			tempNode->m_commands.at(seg).m_handler(*m_menu, args);
-			if (!silent)tcout << currentNode->getFullPath() << TS(">> ") << TS("Command executed successfully");
-			if (!silent)(void)_getwch();
+			if (!silent) tcout << currentNode->getFullPath() << TS(">> ") << TS("Command executed successfully");
+			if (!silent) (void)_getwch();
 			m_menu->setDisplayMode(MenuDisplayMode::Normal);
 			return true;
 		}
 #if WU_WIDE_STRING
 		else if (int num = _wtoi(seg.substr(1).c_str())) {
 #else
-		else if (int num = stoi(seg.substr(1).c_str())) {
+		else if (int num = [&]() -> int {
+				try {
+					return stoi(seg.substr(1).c_str());
+				}
+				catch (const std::invalid_argument&) {
+					return 0;
+				}
+				catch (const std::out_of_range&) {
+					return 0;
+				}
+			}()) {
 #endif
 			if (seg[0] == TS('c')) {
 				if (num <= 0 || num > tempNode->m_commands.size()) {
-					if (!silent)tcerr << TS("Invalid numeric command index: ") << seg << TS("\n");
-					if (!silent)(void)_getwch();
+					if (!silent) tcerr << TS("Invalid numeric command index: ") << seg << TS("\n");
+					if (!silent) (void)_getwch();
 					return false;
 				}
 				auto it = tempNode->m_commands.begin();
@@ -154,8 +168,8 @@ bool MenuNode::navigate(const vector<string_t>& segments, MenuNode*& currentNode
 			}
 			else if (seg[0] == TS('s')) {
 				if (num <= 0 || num > tempNode->m_submenus.size()) {
-					if (!silent)tcerr << TS("Invalid numeric submenu index: ") << seg << TS("\n");
-					if (!silent)(void)_getwch();
+					if (!silent) tcerr << TS("Invalid numeric submenu index: ") << seg << TS("\n");
+					if (!silent) (void)_getwch();
 					return false;
 				}
 				auto it = tempNode->m_submenus.begin();
@@ -164,14 +178,14 @@ bool MenuNode::navigate(const vector<string_t>& segments, MenuNode*& currentNode
 			}
 		}
 		else {
-			if (!silent)tcerr << TS("Invalid path/command: ") << seg << TS("\n");
-			if (!silent)(void)_getwch();
+			if (!silent) tcerr << TS("Invalid path/command: ") << seg << TS("\n");
+			if (!silent) (void)_getwch();
 			return false;
 		}
-	}
+		}
 	currentNode = tempNode;
 	return true;
-}
+	}
 
 void MenuNode::showOptions() const {
 	if (!m_submenus.empty()) {
@@ -297,7 +311,7 @@ void ConsoleMenu::addCommonCommand(string_t cmdName, string_t description, CmdPr
 	m_commonCommands.emplace(move(cmdName), CommandItem(move(description), move(func)));
 }
 
-void WinUtils::ConsoleMenu::excute(string_t input, bool relative)
+void WinUtils::ConsoleMenu::execute(string_t input, bool relative)
 {
 	size_t pos = input.find(TS(' '));
 	string_t strArgs;

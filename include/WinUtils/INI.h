@@ -217,7 +217,7 @@ namespace WinUtils
 	T& INIMap<T>::operator[](string_t key)
 	{
 		INIStringUtil::trim(key);
-#ifndef WU_NO_INI_CASE_SENSITIVE
+#ifdef WU_NO_INI_CASE_SENSITIVE
 		INIStringUtil::toLower(key);
 #endif
 		auto it = pImpl->dataIndexMap.find(key);
@@ -230,7 +230,7 @@ namespace WinUtils
 	T INIMap<T>::get(string_t key) const
 	{
 		INIStringUtil::trim(key);
-#ifndef WU_NO_INI_CASE_SENSITIVE
+#ifdef WU_NO_INI_CASE_SENSITIVE
 		INIStringUtil::toLower(key);
 #endif
 		auto it = pImpl->dataIndexMap.find(key);
@@ -245,7 +245,7 @@ namespace WinUtils
 	bool INIMap<T>::has(string_t key) const
 	{
 		INIStringUtil::trim(key);
-#ifndef WU_NO_INI_CASE_SENSITIVE
+#ifdef WU_NO_INI_CASE_SENSITIVE
 		INIStringUtil::toLower(key);
 #endif
 		return (pImpl->dataIndexMap.count(key) == 1);
@@ -255,7 +255,7 @@ namespace WinUtils
 	void INIMap<T>::set(string_t key, T obj)
 	{
 		INIStringUtil::trim(key);
-#ifndef WU_NO_INI_CASE_SENSITIVE
+#ifdef WU_NO_INI_CASE_SENSITIVE
 		INIStringUtil::toLower(key);
 #endif
 		auto it = pImpl->dataIndexMap.find(key);
@@ -285,7 +285,7 @@ namespace WinUtils
 	bool INIMap<T>::remove(string_t key)
 	{
 		INIStringUtil::trim(key);
-#ifndef WU_NO_INI_CASE_SENSITIVE
+#ifdef WU_NO_INI_CASE_SENSITIVE
 		INIStringUtil::toLower(key);
 #endif
 		auto it = pImpl->dataIndexMap.find(key);

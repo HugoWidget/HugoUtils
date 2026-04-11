@@ -63,7 +63,7 @@ namespace WinUtils {
 		MenuNode& addSubmenu(string_t submenuName, const string_t& description);
 		void addCommand(string_t cmdName, string_t description, CmdProc func = [](ConsoleMenu&, Args) {});
 		string_t getFullPath() const;
-		bool navigate(const std::vector<string_t>& segments, MenuNode*& currentNode, Args& args,bool silent);
+		bool navigate(const std::vector<string_t>& segments, MenuNode*& currentNode, Args& args, bool silent);
 		void showOptions() const;
 		[[nodiscard]] MenuNode* getParent() const;
 		[[nodiscard]] bool hasSubmenu(const string_t& name) const;
@@ -92,7 +92,7 @@ namespace WinUtils {
 		void addCommand(string_t cmdName, string_t description, CmdProc func);
 		void addCommandAtPath(const string_t& menuPath, string_t cmdName, string_t description, CmdProc func);
 		void addCommonCommand(string_t cmdName, string_t description, CmdProc func);
-		void excute(string_t cmdPath, bool relative);
+		void execute(string_t cmdPath, bool relative);
 		void run();                         // Start the console menu main loop
 	};
 
