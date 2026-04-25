@@ -88,7 +88,7 @@ namespace WinUtils
 			if (val.empty()) return default_value;
 			istringstream_t iss(val);
 			U result;
-			iss >> result;
+			iss >> std::boolalpha >> result;
 			if (iss.fail()) return default_value;
 			return result;
 		}

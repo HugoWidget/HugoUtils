@@ -74,6 +74,7 @@ namespace WinUtils {
 
 	// Path Handling
 	string_t ExtractArguments(const string_t& cmdLine);
+	string_t GetCurrentUserName();
 	WUAPI string_t GetCurrentProcessPath();
 	WUAPI string_t GetCurrentProcessDir();
 	WUAPI string_t GetCurrentProcessName();

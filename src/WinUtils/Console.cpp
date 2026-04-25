@@ -101,4 +101,5 @@ void Console::redirect()
 {
 	freopen_s(&stream, "CON", "r", stdin);
 	freopen_s(&stream, "CON", "w", stdout);
+	freopen_s(&stream, "CON", "w", stderr);
 }

@@ -34,6 +34,7 @@
 #if WU_HASHLIB
 #include "WinUtils/hashlib/md5.h"
 #endif
+#include <lmcons.h>
 
 using namespace std;
 using namespace WinUtils;
@@ -340,6 +341,13 @@ namespace WinUtils {
 			++pos;
 		}
 		return (pos < cmdLine.size()) ? cmdLine.substr(pos) : L"";
+	}
+
+	string_t GetCurrentUserName() {
+		char_t userName[UNLEN + 1] = {};
+		DWORD len = UNLEN;
+		TF(GetUserName)(userName, &len);
+		return userName;
 	}
 
 	string_t GetCurrentProcessPath() {
