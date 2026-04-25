@@ -18,7 +18,7 @@
  */
 #include "HugoUtils/HugoUtilsDef.h"
 #ifndef HU_DISABLE_FREEZE
-#include "HugoUtils/HugoFreezeInterface.h"
+#include "HugoUtils/HFreezeInterface.h"
 using namespace std;
 uint32_t CalculateVolumeMask(const wstring& driveLetters)noexcept {
 	uint32_t mask = 0;
@@ -32,7 +32,7 @@ uint32_t CalculateVolumeMask(const wstring& driveLetters)noexcept {
 	return mask;
 }
 
-FreezeResult::FreezeResult(FreezeOperationResult res, const wstring& message, const DWORD err, const wstring& errorMessage, const vector<DiskInfo> diskInfos, const wstring& time)
+FreezeResult::FreezeResult(FreezeOperationResult res, const wstring& message, const DWORD err, const wstring& errorMessage, const map<wchar_t,DiskInfo> diskInfos, const wstring& time)
 	: result(res), msg(message), error(err), errMsg(errorMessage), diskInfos(diskInfos), operateTime(time) {
 }
 
@@ -52,7 +52,7 @@ FreezeResult& FreezeResult::setErrMsg(const wstring& errorMessage) {
 	this->errMsg = errorMessage;
 	return *this;
 }
-FreezeResult& FreezeResult::setDiskInfos(const vector<DiskInfo>& diskInfos) {
+FreezeResult& FreezeResult::setDiskInfos(const map<wchar_t,DiskInfo>& diskInfos) {
 	this->diskInfos = diskInfos;
 	return *this;
 }

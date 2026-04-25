@@ -18,9 +18,9 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 #pragma once
+
 #include <iostream>
 #include <string>
 #include <map>
@@ -30,70 +30,85 @@
 #include "Logger.h"
 #include "CmdParser.h"
 
+#ifndef WUAPI
+#define WUAPI
+#endif
+
 namespace WinUtils {
-	using Args = CmdParser;
-	using CmdProc = std::function<void(ConsoleMenu&, Args)>;
-	struct CommandItem {
-		string_t m_description;       // Command description
-		CmdProc m_handler;                // Command handler function
 
-		CommandItem(string_t desc, CmdProc func)
-			: m_description(std::move(desc)), m_handler(std::move(func)) {
-		}
-	};
+    using Args = CmdParser;
+    using CmdProc = std::function<void(class ConsoleMenu&, Args)>;
 
-	class WUAPI MenuNode {
-	private:
-		string_t m_name;                // Menu name
-		string_t m_description;         // Menu description
-		MenuNode* m_parent;                 // Parent menu node
-		std::map<string_t, MenuNode> m_submenus;  // Submenu collection
-		std::map<string_t, CommandItem> m_commands;  // Node-specific commands
-		ConsoleMenu* m_menu = nullptr;      // Associated console menu instance
-	public:
-		MenuNode(string_t name, MenuNode* parent = nullptr);
+    struct CommandItem {
+        string_t m_description;
+        CmdProc m_handler;
 
-		// Prohibit copy, allow move semantics
-		MenuNode(const MenuNode&) = delete;
-		MenuNode& operator=(const MenuNode&) = delete;
-		MenuNode(MenuNode&&) = default;
-		MenuNode& operator=(MenuNode&&) = default;
+        CommandItem(string_t desc, CmdProc func)
+            : m_description(std::move(desc)), m_handler(std::move(func)) {
+        }
+    };
 
-		// Member functions
-		MenuNode& addSubmenu(string_t submenuName, const string_t& description);
-		void addCommand(string_t cmdName, string_t description, CmdProc func = [](ConsoleMenu&, Args) {});
-		string_t getFullPath() const;
-		bool navigate(const std::vector<string_t>& segments, MenuNode*& currentNode, Args& args, bool silent);
-		void showOptions() const;
-		[[nodiscard]] MenuNode* getParent() const;
-		[[nodiscard]] bool hasSubmenu(const string_t& name) const;
-		[[nodiscard]] bool hasCommand(const string_t& name) const;
+    class WUAPI MenuNode {
+    public:
+        MenuNode(string_t name, MenuNode* parent = nullptr);
 
-	private:
-		friend ConsoleMenu;
-		int getMaxOptionLength(std::vector<string_t> options) const;
-		MenuNode& setConsoleMenu(ConsoleMenu* menu);
-	};
+        // disable copy, allow move
+        MenuNode(const MenuNode&) = delete;
+        MenuNode& operator=(const MenuNode&) = delete;
+        MenuNode(MenuNode&&) = default;
+        MenuNode& operator=(MenuNode&&) = default;
 
-	enum class MenuDisplayMode { Normal, Exclusive };
-	class WUAPI ConsoleMenu {
-	private:
-		MenuNode m_root;                    // Root menu node
-		MenuNode* m_currentNode;            // Current active menu node
-		std::map<string_t, CommandItem> m_commonCommands;  // Global common commands
-		MenuDisplayMode m_mode = MenuDisplayMode::Normal;  // Menu display mode
-		void refresh();                     // Refresh console menu display
+        MenuNode& addSubmenu(string_t submenuName, const string_t& description = TS(""));
+        void addCommand(string_t cmdName, string_t description, CmdProc func = [](ConsoleMenu&, Args) {});
+        string_t getFullPath() const;
+        bool navigate(const std::vector<string_t>& segments, MenuNode*& currentNode, Args& args, bool silent);
+        void showOptions() const;
+        [[nodiscard]] MenuNode* getParent() const;
+        [[nodiscard]] bool hasSubmenu(const string_t& name) const;
+        [[nodiscard]] bool hasCommand(const string_t& name) const;
 
-	public:
-		ConsoleMenu();
-		void setDisplayMode(MenuDisplayMode mode);
-		MenuNode& addSubmenu(string_t submenuName, const string_t& description = TS(""));
-		MenuNode& addSubmenuAtPath(const string_t& parentPath, string_t submenuName, const string_t& description = TS(""));
-		void addCommand(string_t cmdName, string_t description, CmdProc func);
-		void addCommandAtPath(const string_t& menuPath, string_t cmdName, string_t description, CmdProc func);
-		void addCommonCommand(string_t cmdName, string_t description, CmdProc func);
-		void execute(string_t cmdPath, bool relative);
-		void run();                         // Start the console menu main loop
-	};
+    private:
+        friend class ConsoleMenu;
 
-}  // namespace WinUtils
+        int getMaxOptionLength(const std::vector<string_t>& options) const;
+        MenuNode& setConsoleMenu(ConsoleMenu* menu);
+
+        string_t m_name;
+        string_t m_description;
+        MenuNode* m_parent;
+        std::map<string_t, MenuNode> m_submenus;
+        std::map<string_t, CommandItem> m_commands;
+        ConsoleMenu* m_menu = nullptr;
+    };
+
+    enum class MenuDisplayMode { Normal, Exclusive };
+
+    class WUAPI ConsoleMenu {
+    public:
+        ConsoleMenu();
+
+        void setDisplayMode(MenuDisplayMode mode);
+        MenuNode& addSubmenu(string_t submenuName, const string_t& description = TS(""));
+        MenuNode& addSubmenuAtPath(const string_t& parentPath, string_t submenuName, const string_t& description = TS(""));
+        void addCommand(string_t cmdName, string_t description, CmdProc func);
+        void addCommandAtPath(const string_t& menuPath, string_t cmdName, string_t description, CmdProc func);
+        void addCommonCommand(string_t cmdName, string_t description, CmdProc func);
+        void execute(string_t cmdPath, bool relative);
+        string_t substituteVariables(const string_t& input) const;
+        void run();
+
+        // Access to variables (for commands)
+        std::map<string_t, string_t>& getVariables() { return m_variables; }
+        const std::map<string_t, string_t>& getVariables() const { return m_variables; }
+
+    private:
+        void refresh();
+
+        MenuNode m_root;
+        MenuNode* m_currentNode;
+        std::map<string_t, CommandItem> m_commonCommands;
+        MenuDisplayMode m_mode = MenuDisplayMode::Normal;
+        std::map<string_t, string_t> m_variables;
+    };
+
+} // namespace WinUtils

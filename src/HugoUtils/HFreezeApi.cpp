@@ -25,18 +25,18 @@
 #include <cwctype>
 #include <algorithm>
 
-#include "HugoUtils/HugoFreezeApi.h"
+#include "HugoUtils/HFreezeApi.h"
 #include "WinUtils/Logger.h"
 using namespace WinUtils;
 using namespace std;
-static Logger logger(L"HugoFreezeApi");
+static Logger logger(L"HFreezeApi");
 wstring ToUpper(wstring_view str) noexcept {
 	wstring res(str);
 	transform(res.begin(), res.end(), res.begin(), ::towupper);
 	return res;
 }
 
-FreezeResult HugoFreezeApi::Init() noexcept {
+FreezeResult HFreezeApi::Init() noexcept {
 	HKEY hKey = NULL;
 	LONG lResult = RegOpenKeyExW(
 		HKEY_LOCAL_MACHINE,
@@ -75,23 +75,23 @@ FreezeResult HugoFreezeApi::Init() noexcept {
 	return FreezeResult(FrzOR::Success);
 }
 
-void HugoFreezeApi::Cleanup() noexcept {
+void HFreezeApi::Cleanup() noexcept {
 
 }
-bool HugoFreezeApi::IsInitialized() const noexcept {
+bool HFreezeApi::IsInitialized() const noexcept {
 	return true;
 }
 
-void HugoFreezeApi::SetConfig(const std::wstring& ip, uint16_t port) noexcept {
+void HFreezeApi::SetConfig(const std::wstring& ip, uint16_t port) noexcept {
 	m_port = port;
 }
 
-void HugoFreezeApi::GetConfig(std::wstring& outIp, uint16_t& outPort) const noexcept {
+void HFreezeApi::GetConfig(std::wstring& outIp, uint16_t& outPort) const noexcept {
 	outIp = DEFAULT_IP;
 	outPort = m_port;
 }
 
-FreezeResult HugoFreezeApi::GetFreezeState() const noexcept {
+FreezeResult HFreezeApi::GetFreezeState() const noexcept {
 	const std::wstring path = L"/api/v1/get_disk_data";
 
 	logger.DLog(LogLevel::Info, std::format(L"Sending GET request: {}:{}{}", DEFAULT_IP, m_port, path));
@@ -102,7 +102,7 @@ FreezeResult HugoFreezeApi::GetFreezeState() const noexcept {
 		.setMsg(response);
 }
 
-FreezeResult HugoFreezeApi::TryProtect(const std::wstring& driveLetters) const noexcept {
+FreezeResult HFreezeApi::TryProtect(const std::wstring& driveLetters) const noexcept {
 	wstring lettersUpper;
 	lettersUpper = ToUpper(driveLetters);
 	if (CalculateVolumeMask(lettersUpper) == -1)
@@ -117,9 +117,8 @@ FreezeResult HugoFreezeApi::TryProtect(const std::wstring& driveLetters) const n
 		.setMsg(response);
 }
 
-FreezeResult HugoFreezeApi::SetFreezeState(
-	const std::wstring& driveLetters,
-	DriveFreezeState state
+FreezeResult HFreezeApi::SetFreezeState(
+	const std::wstring& driveLetters
 ) noexcept {
 	int vol = CalculateVolumeMask(driveLetters);
 	if (vol == -1)
@@ -135,15 +134,15 @@ FreezeResult HugoFreezeApi::SetFreezeState(
 		.setMsg(response);
 }
 
-std::wstring HugoFreezeApi::GetLastErrorMsg() const noexcept {
+std::wstring HFreezeApi::GetLastErrorMsg() const noexcept {
 	return L"";
 }
 
-DWORD HugoFreezeApi::GetLastErrorCode() const noexcept {
+DWORD HFreezeApi::GetLastErrorCode() const noexcept {
 	return 0;
 }
 
-HugoFreezeApi::HugoFreezeApi() noexcept {
+HFreezeApi::HFreezeApi() noexcept {
 	m_httpClient.setPort(m_port);
 }
 #endif // !HU_DISABLE_FREEZE_API

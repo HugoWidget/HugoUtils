@@ -27,14 +27,14 @@
 
 #include "WinUtils/Logger.h"
 #include "WinUtils/HttpConnect.h"
-#include "HugoUtils/HugoFreezeInterface.h"
+#include "HugoUtils/HFreezeInterface.h"
 
 // Constant definitions
 constexpr wchar_t DEFAULT_IP[] = L"127.0.0.1";
 constexpr uint16_t DEFAULT_PORT = 6082;
 
 // Seewo Freeze API Core Operation Class
-class HugoFreezeApi: public IHugoFreeze {
+class HFreezeApi: public IHugoFreeze {
 public:
 
     virtual FreezeResult Init() noexcept;
@@ -50,16 +50,15 @@ public:
     virtual FreezeResult TryProtect(const std::wstring& driveLetters) const noexcept;
 	// Set freeze state for specified drive letters (e.g., L"CDE" to freeze C:, D:, E:)
     virtual FreezeResult SetFreezeState(
-        const std::wstring& driveLetters,
-		DriveFreezeState state = DriveFreezeState::Frozen
+        const std::wstring& driveLetters
     ) noexcept;
 
     virtual std::wstring GetLastErrorMsg() const noexcept;
     virtual DWORD GetLastErrorCode() const noexcept;
 
 public:
-    HugoFreezeApi() noexcept;
-    ~HugoFreezeApi() = default;
+    HFreezeApi() noexcept;
+    ~HFreezeApi() = default;
 
 private:
     uint16_t m_port{ DEFAULT_PORT };          // Target port

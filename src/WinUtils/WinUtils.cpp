@@ -292,21 +292,7 @@ namespace WinUtils {
 		GetModuleFileNameW(nullptr, path, _countof(path));
 		wstring exePath = path;
 		int argc = 0;
-		LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-		if (!argv) return false;
-
-		wstring params;
-		for (int i = 1; i < argc; ++i) {
-			if (i > 1) params += L' ';
-			wstring arg = argv[i];
-			if (arg.find(L' ') != wstring::npos && arg.front() != L'"') {
-				params += L'"' + arg + L'"';
-			}
-			else {
-				params += arg;
-			}
-		}
-		LocalFree(argv);
+		wstring params = ExtractArguments(TF(GetCommandLine)());
 
 		HINSTANCE hResult = ShellExecuteW(nullptr, L"runas", exePath.c_str(),
 			params.c_str(), nullptr, SW_SHOWNORMAL);
@@ -333,6 +319,27 @@ namespace WinUtils {
 			if (ret == IDOK) TerminateProcessesByName(name);
 			ExitProcess(0);
 		}
+	}
+
+
+	// Path Handling
+	string_t ExtractArguments(const string_t& cmdLine)
+	{
+		if (cmdLine.empty()) return L"";
+		size_t pos = 0;
+		if (cmdLine[0] == L'\"')
+		{
+			pos = cmdLine.find(L'\"', 1);
+			if (pos != wstring::npos) ++pos;
+			while (pos < cmdLine.size() && cmdLine[pos] == L' ') ++pos;
+		}
+		else
+		{
+			pos = cmdLine.find(L' ');
+			if (pos == wstring::npos) return L"";
+			++pos;
+		}
+		return (pos < cmdLine.size()) ? cmdLine.substr(pos) : L"";
 	}
 
 	string_t GetCurrentProcessPath() {

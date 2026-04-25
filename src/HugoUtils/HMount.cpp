@@ -26,7 +26,7 @@
 #include <mutex>
 #include <iomanip>
 
-#include "HugoUtils/HugoMount.h"
+#include "HugoUtils/HMount.h"
 #include "WinUtils/Logger.h"
 #include "WinUtils/StrConvert.h"
 using namespace std;
@@ -37,7 +37,7 @@ constexpr const char* VDK_NT_PATH_FMT = "\\??\\VirtualDK%d\\Partition%d";
 constexpr DWORD VDK_IOCTL_GET_IMAGE_INFO_SIZE = 0x72050;
 constexpr DWORD VDK_IOCTL_GET_IMAGE_INFO_DATA = 0x72054;
 constexpr DWORD VDK_IOCTL_GET_STATS = 0x72074;
-static Logger logger(L"HugoMount");
+static Logger logger(L"HMount");
 
 // ----------------------------------------------------------------------
 // Public member functions
@@ -45,7 +45,7 @@ static Logger logger(L"HugoMount");
 
 // Retrieves all VirtualDK information: driver status, disk count, disk details,
 // backing files and partition tables.
-HugoMountInfo HugoMount::GetAllInfo() const {
+HugoMountInfo HMount::GetAllInfo() const {
 	logger.DLog(LogLevel::Debug, L"Starting to list all VirtualDK information");
 
 	HugoMountInfo info;
@@ -176,7 +176,7 @@ HugoMountInfo HugoMount::GetAllInfo() const {
 }
 
 // Prints all VirtualDK information to the console in a human-readable format.
-void HugoMount::PrintAllInfo() const {
+void HMount::PrintAllInfo() const {
 	HugoMountInfo info = GetAllInfo();
 
 	// Driver information
@@ -205,7 +205,7 @@ void HugoMount::PrintAllInfo() const {
 }
 
 // Reads the MBR from the given device and returns a vector of partition info.
-vector<HugoMountInfo::PartitionInfo> HugoMount::GetPartitionsInfo(HANDLE hDevice, DWORD totalSectors) const
+vector<HugoMountInfo::PartitionInfo> HMount::GetPartitionsInfo(HANDLE hDevice, DWORD totalSectors) const
 {
 	vector<HugoMountInfo::PartitionInfo> partitions;
 	BYTE buffer[512] = { 0 };
@@ -258,7 +258,7 @@ vector<HugoMountInfo::PartitionInfo> HugoMount::GetPartitionsInfo(HANDLE hDevice
 }
 
 // Prints partition information for a single disk to the console.
-void HugoMount::PrintPartitionsInfo(const HugoMountInfo::DiskInfo& disk) const {
+void HMount::PrintPartitionsInfo(const HugoMountInfo::DiskInfo& disk) const {
 	cout << "      0              0    ";
 	PrintFormattedSize(disk.capacitySectors);
 	cout << "  <disk>\n";
@@ -274,7 +274,7 @@ void HugoMount::PrintPartitionsInfo(const HugoMountInfo::DiskInfo& disk) const {
 
 // Retrieves the file version string of the driver binary.
 // Handles "\\SystemRoot" prefix and disables WOW64 redirection temporarily.
-expected<string, DWORD> HugoMount::GetDriverFileVersion(const string& path) const {
+expected<string, DWORD> HMount::GetDriverFileVersion(const string& path) const {
 	char fullPath[MAX_PATH * 2] = { 0 };
 	// Resolve \SystemRoot prefix to actual Windows directory
 	if (path.compare(0, 11, "\\SystemRoot") == 0) {
@@ -345,7 +345,7 @@ expected<string, DWORD> HugoMount::GetDriverFileVersion(const string& path) cons
 
 // Mounts the specified disk/partition to the given drive letter (or auto-assigns one).
 // Returns 0 on success, otherwise an error code.
-int HugoMount::Mount(int diskId, int partId, char driveLetter) const {
+int HMount::Mount(int diskId, int partId, char driveLetter) const {
 	logger.DLog(LogLevel::Info,
 		format(L"Executing mount command: Disk{} Partition{}, specified drive letter: {}", diskId, partId, driveLetter ? wstring(1, (wchar_t)driveLetter) : L"auto-assign"));
 
@@ -379,7 +379,7 @@ int HugoMount::Mount(int diskId, int partId, char driveLetter) const {
 
 // Unmounts a previously mounted drive. The drive can be specified by disk/partition ID or directly by letter.
 // Returns 0 on success, otherwise an error code.
-int HugoMount::Unmount(int diskId, int partId, char driveLetter) const {
+int HMount::Unmount(int diskId, int partId, char driveLetter) const {
 	logger.DLog(LogLevel::Info,
 		format(L"Executing unmount command: Disk{} Partition{}, specified drive letter: {}", diskId, partId, driveLetter ? wstring(1, (wchar_t)driveLetter) : L"auto-search"));
 
@@ -414,41 +414,8 @@ int HugoMount::Unmount(int diskId, int partId, char driveLetter) const {
 // Private member functions
 // ----------------------------------------------------------------------
 
-// Returns a string containing all currently used drive letters (lowercase).
-std::string HugoMount::GetDrivesInUse() const
-{
-	auto IsDriveLetterInUse = [](char driveLetter) ->bool {
-		char dosDevice[4] = { static_cast<char>(toupper(driveLetter)), ':', '\0' };
-		char buf[MAX_PATH] = {};
-		return QueryDosDeviceA(dosDevice, buf, MAX_PATH) != 0;
-		};
-	string res;
-	char c = 'a';
-	while (c <= 'z') {
-		if (IsDriveLetterInUse(c)) res += c;
-		c++;
-	}
-	return res;
-}
-
 // Finds the first available drive letter from C to Z that is not currently in use.
-char HugoMount::GetFirstAvailableDrive() const {
-	/*
-	DWORD drives = GetLogicalDrives();
-	drives >>= 2;  // Skip A and B drives
-	char letter = 'C';
-
-	while (drives & 1) {
-		drives >>= 1;
-		letter++;
-		if (letter > 'Z') {
-			logger.DLog(LogLevel::Error, L"No available drive letters (C-Z all occupied)");
-			return 0;
-		}
-	}
-	logger.DLog(LogLevel::Debug, format(L"Found first available drive letter: {}", letter));
-	return letter;
-	*/
+char HMount::GetFirstAvailableDrive() const {
 	auto IsDriveLetterInUse = [](char driveLetter) ->bool {
 		char dosDevice[4] = { static_cast<char>(toupper(driveLetter)), ':', '\0' };
 		char buf[MAX_PATH] = {};
@@ -462,7 +429,7 @@ char HugoMount::GetFirstAvailableDrive() const {
 
 // Searches for the drive letter that is currently linked to the specified disk/partition.
 // If found, stores it in outLetter and returns 0; otherwise returns an error code.
-DWORD HugoMount::FindDriveLetter(int diskId, int partId, char& outLetter) const {
+DWORD HMount::FindDriveLetter(int diskId, int partId, char& outLetter) const {
 	char targetPath[MAX_PATH] = {};
 	sprintf_s(targetPath, VDK_NT_PATH_FMT, diskId, partId);
 	logger.DLog(LogLevel::Debug,
@@ -490,7 +457,7 @@ DWORD HugoMount::FindDriveLetter(int diskId, int partId, char& outLetter) const 
 }
 
 // Queries the VirtualDK driver for the total number of disks currently configured.
-int HugoMount::GetDiskCount() const {
+int HMount::GetDiskCount() const {
 	HANDLE hDevice = CreateFileA("\\\\.\\VirtualDK0\\Partition0",
 		GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
 		NULL, OPEN_EXISTING, 0, NULL);
@@ -524,7 +491,7 @@ int HugoMount::GetDiskCount() const {
 
 // Retrieves the image information block from the driver via two IOCTLs.
 // Allocates memory and returns it in outBlock; caller must free() it.
-DWORD HugoMount::GetImageInfoBlock(HANDLE hDevice, void** outBlock) const {
+DWORD HMount::GetImageInfoBlock(HANDLE hDevice, void** outBlock) const {
 	if (!outBlock) {
 		logger.DLog(LogLevel::Error, L"GetImageInfoBlock: Input parameter outBlock is null");
 		return ERROR_INVALID_PARAMETER;
@@ -571,7 +538,7 @@ DWORD HugoMount::GetImageInfoBlock(HANDLE hDevice, void** outBlock) const {
 }
 
 // Core function to create a DOS device link (mount) for the specified disk/partition.
-DWORD HugoMount::DoLink(int diskId, int partId, char driveLetter) const {
+DWORD HMount::DoLink(int diskId, int partId, char driveLetter) const {
 	char dosDevice[4] = { static_cast<char>(toupper(driveLetter)), ':', 0, 0 };
 	char targetPath[MAX_PATH] = { 0 };
 	sprintf_s(targetPath, VDK_NT_PATH_FMT, diskId, partId);
@@ -600,7 +567,7 @@ DWORD HugoMount::DoLink(int diskId, int partId, char driveLetter) const {
 }
 
 // Core function to remove a DOS device link (unmount) for the given drive letter.
-DWORD HugoMount::DoUnlink(char driveLetter) const {
+DWORD HMount::DoUnlink(char driveLetter) const {
 	char dosDevice[4] = { static_cast<char>(toupper(driveLetter)), ':', 0, 0 };
 	logger.DLog(LogLevel::Debug,
 		format(L"Attempting to unmount drive letter: {}", driveLetter));
@@ -621,7 +588,7 @@ DWORD HugoMount::DoUnlink(char driveLetter) const {
 }
 
 // Helper function to print a sector count in a formatted way (sectors + MB).
-void HugoMount::PrintFormattedSize(long long sectors) const {
+void HMount::PrintFormattedSize(long long sectors) const {
 	double sizeMB = static_cast<double>(sectors * 512) / (1024 * 1024);
 	cout << setw(10) << sectors << " (" << fixed << setprecision(0) << setw(6) << sizeMB << " MB)";
 }

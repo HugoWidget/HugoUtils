@@ -25,7 +25,7 @@
 #include <vector>
 #include <filesystem>
 
-class HugoInfo {
+class HInfo {
 public:
     std::optional<std::wstring> getHugoVersion();
     std::optional<std::wstring> getHugoFolder();

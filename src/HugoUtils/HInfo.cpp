@@ -24,16 +24,16 @@
 #include <string_view>
 #include <optional>
 
-#include "HugoUtils/HugoInfo.h"
+#include "HugoUtils/HInfo.h"
 #include "WinUtils/StrConvert.h"
 #include "WinUtils/Logger.h"
 using namespace std;
 using namespace WinUtils;
 namespace fs = std::filesystem;
 
-static Logger logger(L"HugoInfo");
+static Logger logger(L"HInfo");
 
-optional<fs::path> HugoInfo::FindFirstDirectory(
+optional<fs::path> HInfo::FindFirstDirectory(
     const fs::path& baseDir,
     wstring_view prefix)
 {
@@ -54,7 +54,7 @@ optional<fs::path> HugoInfo::FindFirstDirectory(
     return nullopt;
 }
 
-vector<fs::path> HugoInfo::FindAllDirectories(
+vector<fs::path> HInfo::FindAllDirectories(
     const fs::path& baseDir,
     wstring_view prefix)
 {
@@ -76,7 +76,7 @@ vector<fs::path> HugoInfo::FindAllDirectories(
     return result;
 }
 
-optional<wstring> HugoInfo::ExtractVersionFromDirName(const fs::path& dirPath)
+optional<wstring> HInfo::ExtractVersionFromDirName(const fs::path& dirPath)
 {
     wstring dirName = dirPath.filename().wstring();
     size_t underscorePos = dirName.find(L'_');
@@ -86,7 +86,7 @@ optional<wstring> HugoInfo::ExtractVersionFromDirName(const fs::path& dirPath)
     return nullopt;
 }
 
-optional<wstring> HugoInfo::getHugoVersion()
+optional<wstring> HInfo::getHugoVersion()
 {
     auto foundDir = FindFirstDirectory(SEEWO_SERVICE_BASE, SEEWO_SERVICE_PREFIX);
     if (!foundDir) {
@@ -96,7 +96,7 @@ optional<wstring> HugoInfo::getHugoVersion()
     return ExtractVersionFromDirName(*foundDir);
 }
 
-optional<wstring> HugoInfo::getHugoFolder()
+optional<wstring> HInfo::getHugoFolder()
 {
     auto foundDir = FindFirstDirectory(SEEWO_SERVICE_BASE, SEEWO_SERVICE_PREFIX);
     if (!foundDir) {
@@ -107,7 +107,7 @@ optional<wstring> HugoInfo::getHugoFolder()
     return foundDir->wstring() + L'\\';
 }
 
-optional<wstring> HugoInfo::getHugoProtectDriverFolder()
+optional<wstring> HInfo::getHugoProtectDriverFolder()
 {
     auto hugoFolder = getHugoFolder();
     if (!hugoFolder) return nullopt;
@@ -118,7 +118,7 @@ optional<wstring> HugoInfo::getHugoProtectDriverFolder()
     return driverFolder.wstring() + L'\\';
 }
 
-optional<wstring> HugoInfo::getHugoProtectDriverPath()
+optional<wstring> HInfo::getHugoProtectDriverPath()
 {
     auto driverFolder = getHugoProtectDriverFolder();
     if (!driverFolder) return nullopt;
@@ -129,7 +129,7 @@ optional<wstring> HugoInfo::getHugoProtectDriverPath()
     return driverPath.wstring();
 }
 
-vector<wstring> HugoInfo::getHugoUpdateFolder()
+vector<wstring> HInfo::getHugoUpdateFolder()
 {
     auto dirs = FindAllDirectories(EASIUPDATE_BASE, EASIUPDATE_PREFIX);
     vector<wstring> result;

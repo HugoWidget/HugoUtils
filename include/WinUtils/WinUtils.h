@@ -73,6 +73,7 @@ namespace WinUtils {
 	WUAPI void EnsureSingleInstance(string_t title = TS(""), string_t name = TS(""), string_t content = TS(""), string_t extraInfo = TS(""));
 
 	// Path Handling
+	string_t ExtractArguments(const string_t& cmdLine);
 	WUAPI string_t GetCurrentProcessPath();
 	WUAPI string_t GetCurrentProcessDir();
 	WUAPI string_t GetCurrentProcessName();

@@ -28,7 +28,7 @@
 
 #include "hashlib/sha256.h"
 #include "hashlib/md5.h"
-#include "HugoUtils/HugoPassword.h"
+#include "HugoUtils/HPassword.h"
 
 // -------------------- Helper functions --------------------
 static std::string PreComputeHugoMd5() {

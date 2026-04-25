@@ -21,7 +21,7 @@
 #ifndef HU_DISABLE_ART
 #include<string>
 #include<vector>
-class HugoArt
+class HArt
 {
 public:
 	static const std::vector<std::wstring> GetHugoArtText(int idx);

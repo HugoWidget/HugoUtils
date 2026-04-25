@@ -51,7 +51,7 @@ void HttpConnect::setPort(short port)
 	this->port = port;
 }
 
-string_t HttpConnect::socketHttp(string_t host, string_t request)const
+string_t HttpConnect::socketHttp(string_t host, string_t request, int code_page)const
 {
 	SOCKET sockfd = -1;
 
@@ -103,14 +103,18 @@ string_t HttpConnect::socketHttp(string_t host, string_t request)const
 			break;
 		}
 	}
+#ifdef WU_NARROW_STRING
 	string_t res = ConvertString<string_t>((string)buf);
+#else
+	string_t res = MultiByteToWide(buf, code_page);
+#endif
 	logger.DLog(LogLevel::Debug, TS("socketHttp response:\n") + res);
 	closesocket(sockfd);
 	buf[offset] = 0;
 	return res;
 }
 
-string_t HttpConnect::postData(string_t host, string_t path, string_t post_content)const
+string_t HttpConnect::postData(string_t host, string_t path, string_t post_content, int code_page)const
 {
 	stringstream_t stream;
 	stream << TS("POST ") << path;
@@ -121,12 +125,12 @@ string_t HttpConnect::postData(string_t host, string_t path, string_t post_conte
 	stream << TS("Content-Length:") << post_content.length() << TS("\r\n");
 	stream << TS("Connection:close\r\n\r\n");
 	stream << post_content.c_str();
-	string_t res = socketHttp(host, stream.str());
+	string_t res = socketHttp(host, stream.str(), code_page);
 	logger.DLog(LogLevel::Debug, TS("postData response:\n") + res);
 	return res;
 }
 
-string_t HttpConnect::getData(string_t host, string_t path, string_t get_content)const
+string_t HttpConnect::getData(string_t host, string_t path, string_t get_content, int code_page)const
 {
 	stringstream_t stream;
 	stream << TS("GET ") << path << (get_content.length() ? TS("?") : TS("")) << get_content;
@@ -135,5 +139,5 @@ string_t HttpConnect::getData(string_t host, string_t path, string_t get_content
 	stream << TS("User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n");
 	stream << TS("Connection:close\r\n\r\n");
 
-	return socketHttp(host, stream.str());
+	return socketHttp(host, stream.str(), code_page);
 }

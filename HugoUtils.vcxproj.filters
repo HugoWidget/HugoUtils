@@ -31,28 +31,28 @@
     <ClCompile Include="src\HugoUtils\GPL3.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\HugoUtils\HugoArt.cpp">
+    <ClCompile Include="src\HugoUtils\HArt.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\HugoUtils\HugoFreezeApi.cpp">
+    <ClCompile Include="src\HugoUtils\HFreezeApi.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\HugoUtils\HugoFreezeDriver.cpp">
+    <ClCompile Include="src\HugoUtils\HFreezeDriver.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\HugoUtils\HugoFreezeInterface.cpp">
+    <ClCompile Include="src\HugoUtils\HFreezeInterface.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\HugoUtils\HugoInfo.cpp">
+    <ClCompile Include="src\HugoUtils\HInfo.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\HugoUtils\HugoInstaller.cpp">
+    <ClCompile Include="src\HugoUtils\HInstaller.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\HugoUtils\HugoMount.cpp">
+    <ClCompile Include="src\HugoUtils\HMount.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\HugoUtils\HugoPassword.cpp">
+    <ClCompile Include="src\HugoUtils\HPassword.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\HugoUtils\HugoUtils.cpp">
@@ -115,7 +115,7 @@
     <ClCompile Include="src\hashlib\sha256.cpp">
       <Filter>源文件\hashlib</Filter>
     </ClCompile>
-    <ClCompile Include="src\HugoUtils\HugoLock.cpp">
+    <ClCompile Include="src\HugoUtils\HLock.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -126,28 +126,28 @@
     <ClInclude Include="include\HugoUtils\GPL3.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\HugoUtils\HugoArt.h">
+    <ClInclude Include="include\HugoUtils\HArt.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\HugoUtils\HugoFreezeApi.h">
+    <ClInclude Include="include\HugoUtils\HFreezeApi.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\HugoUtils\HugoFreezeDriver.h">
+    <ClInclude Include="include\HugoUtils\HFreezeDriver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\HugoUtils\HugoFreezeInterface.h">
+    <ClInclude Include="include\HugoUtils\HFreezeInterface.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\HugoUtils\HugoInfo.h">
+    <ClInclude Include="include\HugoUtils\HInfo.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\HugoUtils\HugoInstaller.h">
+    <ClInclude Include="include\HugoUtils\HInstaller.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\HugoUtils\HugoMount.h">
+    <ClInclude Include="include\HugoUtils\HMount.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\HugoUtils\HugoPassword.h">
+    <ClInclude Include="include\HugoUtils\HPassword.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="include\HugoUtils\HugoUtils.h">
@@ -225,7 +225,7 @@
     <ClInclude Include="include\hashlib\sha256.h">
       <Filter>头文件\hashlib</Filter>
     </ClInclude>
-    <ClInclude Include="include\HugoUtils\HugoLock.h">
+    <ClInclude Include="include\HugoUtils\HLock.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

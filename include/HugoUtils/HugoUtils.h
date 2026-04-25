@@ -17,4 +17,8 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-
+#include <string>
+namespace HugoUtils {
+	std::string GetDrivesInUse();
+	std::string GetLogicalDrives();
+}

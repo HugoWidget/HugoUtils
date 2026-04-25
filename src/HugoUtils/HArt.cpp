@@ -20,7 +20,7 @@
 #ifndef HU_DISABLE_ART
 #include <iostream>
 
-#include "HugoUtils/HugoArt.h"
+#include "HugoUtils/HArt.h"
 using namespace std;
 const vector<wstring> hugo_progs_arts[] = {
 {
@@ -36,13 +36,13 @@ L"©Ç©Ï©·©³©³©·©³©·©§©§©³©·©³©·©³©·©³",
 L"©¿©»©»©ß©»©Ï©»©¿©Ç©¿©¿ ©»©¿©»©Ï©¿",
 L"     ©¿         ©¿"
 } };
-const std::vector<std::wstring> HugoArt::GetHugoArtText(int idx)
+const std::vector<std::wstring> HArt::GetHugoArtText(int idx)
 {
 	if (idx >= sizeof(hugo_progs_arts) / sizeof(hugo_progs_arts[0]))return {};
 	return std::vector<std::wstring>(hugo_progs_arts[idx]);
 }
 
-void HugoArt::PrintArtText(int idx)
+void HArt::PrintArtText(int idx)
 {
 	auto art=GetHugoArtText(idx);
 	for (const wstring& line : art) {

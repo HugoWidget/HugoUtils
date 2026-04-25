@@ -25,7 +25,7 @@
 #include <cstdint>
 #include <string>
 
-#include "HugoUtils/HugoFreezeInterface.h"
+#include "HugoUtils/HFreezeInterface.h"
 
 // Driver runtime status structure
 struct DriverRuntimeStatus {
@@ -51,39 +51,46 @@ struct QueryResult {
 };
 
 // SWFreeze Driver Management Class
-class HugoFreezeDriver :public IHugoFreeze {
+class HFreezeDriver :public IHugoFreeze {
 public:
-	static HugoFreezeDriver& Instance() noexcept;
+	static HFreezeDriver& Instance() noexcept;
 
 	FreezeResult Init() noexcept;
 	void Cleanup() noexcept;
 	bool IsInitialized() const noexcept;
 
 	// Configuration management
-	QueryResult QueryDriverStatus() noexcept;
+	QueryResult QueryDriverStatus() const noexcept;
 
 	// Core functionalities
 	FreezeResult GetFreezeState() const noexcept;
 	FreezeResult TryProtect(const std::wstring& driveLetters) const noexcept;
 	FreezeResult SetFreezeState(
-		const std::wstring& driveLetters,
-		DriveFreezeState state
+		const std::wstring& driveLetters
 	) noexcept;
 
 	virtual std::wstring GetLastErrorMsg() const noexcept;
 	virtual DWORD GetLastErrorCode() const noexcept;
-
+	static FreezeResult ParseFreezeBuffer(const unsigned char* buf, int len, QueryResult query);
+	static FreezeResult ParseFreezeBuffer(QueryResult query);
 	static std::wstring HexDump(const unsigned char* data, int len)noexcept;
+	static std::wstring FormatFreezeStateResult(const FreezeResult& result);
+	static std::wstring FormatFreezeStateResult(
+		const FreezeResult& result,
+		uint32_t activeFlag,
+		uint64_t ptr1,
+		const std::wstring& logStr
+	);
 private:
 	HANDLE m_hDriver = NULL;
 	HANDLE OpenDriver();
 	bool ModifyConfig(uint32_t newVol, bool enable) noexcept;
-	HugoFreezeDriver() = default;
-	~HugoFreezeDriver() = default;
-	HugoFreezeDriver(const HugoFreezeDriver&) = delete;
-	HugoFreezeDriver(HugoFreezeDriver&&) = delete;
-	HugoFreezeDriver& operator=(const HugoFreezeDriver&) = delete;
-	HugoFreezeDriver& operator=(HugoFreezeDriver&&) = delete;
+	HFreezeDriver() = default;
+	~HFreezeDriver() = default;
+	HFreezeDriver(const HFreezeDriver&) = delete;
+	HFreezeDriver(HFreezeDriver&&) = delete;
+	HFreezeDriver& operator=(const HFreezeDriver&) = delete;
+	HFreezeDriver& operator=(HFreezeDriver&&) = delete;
 private:
 	static constexpr uint32_t SWF_OFFSET_UINT32_NEXT_MASK = 0x10;
 	static constexpr uint8_t  SWF_OFFSET_UINT8_FLAG1 = 0x2D;

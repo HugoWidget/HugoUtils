@@ -27,6 +27,7 @@
 #include <vector>
 #include <memory>
 #include <expected>
+#include <map>
 using LPFN_WOW64DISABLEWOW64FSREDIRECTION = BOOL(WINAPI*)(PVOID*);
 using LPFN_WOW64REVERTWOW64FSREDIRECTION = BOOL(WINAPI*)(PVOID);
 
@@ -98,10 +99,10 @@ struct HugoMountInfo {
 	std::vector<DiskInfo> disks;
 };
 
-class HugoMount {
+class HMount {
 public:
-	HugoMount() = default;
-	~HugoMount() = default;
+	HMount() = default;
+	~HMount() = default;
 	HugoMountInfo GetAllInfo() const;
 	void PrintAllInfo() const;
 	std::vector<HugoMountInfo::PartitionInfo> GetPartitionsInfo(
@@ -111,7 +112,6 @@ public:
 	int Mount(int diskId, int partId, char driveLetter = 0) const;
 	int Unmount(int diskId = -1, int partId = -1, char driveLetter = 0) const;
 private:
-	std::string GetDrivesInUse()const;
 	char GetFirstAvailableDrive() const;
 	DWORD FindDriveLetter(int diskId, int partId, char& outLetter) const;
 	int GetDiskCount() const;
@@ -120,7 +120,7 @@ private:
 	DWORD DoUnlink(char driveLetter) const;
 	void PrintFormattedSize(long long sectors) const;
 private:
-	HugoMount(const HugoMount&) = delete;
-	HugoMount& operator=(const HugoMount&) = delete;
+	HMount(const HMount&) = delete;
+	HMount& operator=(const HMount&) = delete;
 };
 #endif // !HU_DISABLE_MOUNT

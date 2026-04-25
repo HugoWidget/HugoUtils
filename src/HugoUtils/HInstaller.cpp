@@ -33,7 +33,7 @@
 #include "WinUtils/StrConvert.h"
 #include "WinUtils/WinUtils.h"
 
-#include "HugoUtils/HugoInstaller.h"
+#include "HugoUtils/HInstaller.h"
 using namespace std;
 using namespace WinUtils;
 

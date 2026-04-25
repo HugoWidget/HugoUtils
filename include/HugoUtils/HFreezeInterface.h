@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <map>
 #include <string>
 
 // Common enumeration definitions
@@ -35,36 +36,48 @@ enum class FreezeOperationResult : uint8_t {
 	NetworkError = 4,   // Network error
 	InitFailed = 5,     // Initialization failed
 	NotInitialized = 6, // Not initialized
-	NotSupported = 7     // Not supported
+	NotSupported = 7    // Not supported
 };
 using FrzOR = FreezeOperationResult;
 enum class DriveFreezeState : uint8_t {
-	Frozen = 0,         // Frozen
-	Unfrozen = 1,       // Unfrozen
-	Unknown = 2         // State unknown
+	Frozen = 1,         // Frozen
+	Unfrozen = 2,       // Unfrozen
+	PendingUnfreeze = 3,// About to unfreeze
+	PendingFreeze = 4   // About to freeze
 };
 
 // Common structure definitions
 struct DiskInfo {
-	std::wstring diskId;        // Drive letter (e.g., L"C:")
 	DriveFreezeState state;     // Freeze state
+};
+
+struct ExtraInfo {
+	std::string md5;
+	uint32_t next_mask;
+	uint8_t flag1;
+	uint16_t status;
+	uint8_t flag2;
+	uint32_t vol_mask_copy;
+	std::string device_id;
+	std::string school_code;
 };
 
 struct FreezeResult {
 	FreezeResult(FreezeOperationResult res, const std::wstring& message = L"",
-		const DWORD err = ERROR_SUCCESS, const std::wstring& errorMessage = L"", const std::vector<DiskInfo> diskInfos = {}, const std::wstring& time = L"");
+		const DWORD err = ERROR_SUCCESS, const std::wstring& errorMessage = L"", const std::map<wchar_t, DiskInfo> diskInfos = {}, const std::wstring& time = L"");
 	FreezeResult& setResult(FreezeOperationResult res);
 	FreezeResult& setMsg(const std::wstring& message);
 	FreezeResult& setError(const DWORD error);
 	FreezeResult& setErrMsg(const std::wstring& errorMessage);
-	FreezeResult& setDiskInfos(const std::vector<DiskInfo>& diskInfos);
+	FreezeResult& setDiskInfos(const std::map<wchar_t, DiskInfo>& diskInfos);
 	FreezeResult& setOperateTime(const std::wstring& time);
 	FreezeOperationResult result;    // Result of the protect try operation
 	std::wstring msg;                // message
 	DWORD error;                     // error
 	std::wstring errMsg;             // error message
-	std::vector<DiskInfo> diskInfos; // List of disk information
+	std::map<wchar_t, DiskInfo> diskInfos; // List of disk information
 	std::wstring operateTime;        // Operation time (format: yyyy-MM-dd HH:mm:ss)
+	ExtraInfo extra;
 };
 
 class IHugoFreeze {
@@ -79,8 +92,7 @@ public:
 	virtual FreezeResult GetFreezeState() const noexcept = 0;
 	virtual FreezeResult TryProtect(const std::wstring& driveLetters) const noexcept = 0;
 	virtual FreezeResult SetFreezeState(
-		const std::wstring& driveLetters,
-		DriveFreezeState state
+		const std::wstring& driveLetters
 	) noexcept = 0;
 
 	virtual std::wstring GetLastErrorMsg() const noexcept = 0;

@@ -36,9 +36,9 @@ namespace WinUtils {
 		HttpConnect();
 		~HttpConnect();
 		void setPort(short port);
-		string_t socketHttp(string_t host, string_t request)const;
-		string_t postData(string_t host, string_t path, string_t post_content)const;
-		string_t getData(string_t host, string_t path, string_t get_content)const;
+		string_t socketHttp(string_t host, string_t request, int code_page = CP_UTF8)const;
+		string_t postData(string_t host, string_t path, string_t post_content, int code_page = CP_UTF8)const;
+		string_t getData(string_t host, string_t path, string_t get_content, int code_page = CP_UTF8)const;
 	private:
 		short port = 80;
 	};
