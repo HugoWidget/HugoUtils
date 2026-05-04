@@ -19,10 +19,10 @@
 #include "HugoUtils/HugoUtilsDef.h"
 #ifndef HU_DISABLE_INFO
 
-
 #include <iostream>
 #include <string_view>
 #include <optional>
+#include <shlobj.h>
 
 #include "HugoUtils/HInfo.h"
 #include "WinUtils/StrConvert.h"
@@ -103,7 +103,6 @@ optional<wstring> HInfo::getHugoFolder()
         logger.Warn(L"SeewoService directory not found");
         return nullopt;
     }
-    // 返回目录路径并以反斜杠结尾（保持与原行为一致）
     return foundDir->wstring() + L'\\';
 }
 
@@ -138,5 +137,50 @@ vector<wstring> HInfo::getHugoUpdateFolder()
         result.push_back(d.wstring() + L'\\');
     }
     return result;
+}
+
+std::optional<std::string> HInfo::GetMachineId() {
+    char buffer[128] = { 0 };
+    DWORD buffer_size = sizeof(buffer);
+    HKEY hKey;
+
+    LONG result = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\SQMClient",
+        0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+    if (result != ERROR_SUCCESS) {
+        result = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+            "SOFTWARE\\Microsoft\\SQMClient",
+            0, KEY_READ, &hKey);
+    }
+    if (result != ERROR_SUCCESS) {
+        return std::nullopt;
+    }
+
+    result = RegQueryValueExA(hKey, "MachineId", nullptr, nullptr,
+        reinterpret_cast<LPBYTE>(buffer), &buffer_size);
+    RegCloseKey(hKey);
+
+    if (result != ERROR_SUCCESS) {
+        return std::nullopt;
+    }
+    return std::string(buffer);
+}
+
+std::optional<std::string> HInfo::GetSeewoCoreIniPath() {
+    char path[MAX_PATH] = { 0 };
+    if (SUCCEEDED(SHGetFolderPathA(nullptr, CSIDL_COMMON_APPDATA, nullptr, 0, path))) {
+        strcat_s(path, MAX_PATH, "\\Seewo\\SeewoCore\\SeewoCore.ini");
+        return std::string(path);
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> HInfo::GetLockConfigIniPath() {
+    char path[MAX_PATH] = { 0 };
+    if (SUCCEEDED(SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, path))) {
+        strcat_s(path, MAX_PATH, "\\seewo\\SeewoAbility\\SeewoLockConfig.ini");
+        return std::string(path);
+    }
+    return std::nullopt;
 }
 #endif // !HU_DISABLE_INFO

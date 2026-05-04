@@ -39,16 +39,20 @@ enum class FreezeOperationResult : uint8_t {
 	NotSupported = 7    // Not supported
 };
 using FrzOR = FreezeOperationResult;
+
 enum class DriveFreezeState : uint8_t {
+	Unfrozen = 0,       // Unfrozen
 	Frozen = 1,         // Frozen
-	Unfrozen = 2,       // Unfrozen
+	PendingFreeze = 2,  // About to freeze
 	PendingUnfreeze = 3,// About to unfreeze
-	PendingFreeze = 4   // About to freeze
+	Unknown = 4
 };
 
 // Common structure definitions
 struct DiskInfo {
 	DriveFreezeState state;     // Freeze state
+	size_t bytesFree = 0;
+	size_t bytesTotal = 0;
 };
 
 struct ExtraInfo {

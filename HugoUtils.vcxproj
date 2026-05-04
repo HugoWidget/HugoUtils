@@ -71,6 +71,7 @@
     <ClInclude Include="include\HugoUtils\HInstaller.h" />
     <ClInclude Include="include\HugoUtils\HMount.h" />
     <ClInclude Include="include\HugoUtils\HPassword.h" />
+    <ClInclude Include="include\HugoUtils\HugoString.h" />
     <ClInclude Include="include\HugoUtils\HugoUtils.h" />
     <ClInclude Include="include\HugoUtils\HugoUtilsDef.h" />
     <ClInclude Include="include\HugoUtils\HLock.h" />

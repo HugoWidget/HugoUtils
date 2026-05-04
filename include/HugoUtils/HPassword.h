@@ -25,9 +25,9 @@
 #include "HugoUtils/BruteforceModel.h"   // Contains definitions for CrackTask, CrackMode, PasswordType, InfoAcquirer, Decryptor, etc.
 
 // Constants
-const int PASSWORD_MAX = 1000000;          // Total number of 6-digit passwords
-const int PASSWORD_BUF_LEN = 7;             // Password string buffer size
-const int MD5_TRUNCATED_LEN = 16;           // MD5 truncation length ([8:24])
+const int PASSWORD_MAX = 1000000;            // Total number of 6-digit passwords
+const int PASSWORD_BUF_LEN = 7;              // Password string buffer size
+const int MD5_TRUNCATED_LEN = 16;            // MD5 truncation length ([8:24])
 const int PASS_V3_VALID_LEN = 96;            // V3 ciphertext length
 const int HASH_BIN_LEN = 32;                 // SHA256 binary length
 

@@ -32,6 +32,9 @@ public:
     std::optional<std::wstring> getHugoProtectDriverFolder();
     std::optional<std::wstring> getHugoProtectDriverPath();
     std::vector<std::wstring> getHugoUpdateFolder();
+    static std::optional<std::string> GetMachineId();
+    static std::optional<std::string> GetSeewoCoreIniPath();
+    static std::optional<std::string> GetLockConfigIniPath();
 
 private:
     static inline const std::filesystem::path SEEWO_SERVICE_BASE = L"C:\\Program Files (x86)\\Seewo\\SeewoService";

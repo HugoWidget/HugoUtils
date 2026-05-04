@@ -29,6 +29,7 @@
 #include "hashlib/sha256.h"
 #include "hashlib/md5.h"
 #include "HugoUtils/HPassword.h"
+#include <HugoUtils/HInfo.h>
 
 // -------------------- Helper functions --------------------
 static std::string PreComputeHugoMd5() {
@@ -46,20 +47,17 @@ static void HexToBin(const std::string& hex, uint8_t* bin, int bin_len) {
 std::vector<CrackTask> AutoInfoAcquirer::acquire() {
     std::vector<CrackTask> tasks;
     std::string device_id, machine_id;
-    char seewocore_ini_path[MAX_PATH] = { 0 };
-    char lock_ini_path[MAX_PATH] = { 0 };
 
-    if (SUCCEEDED(SHGetFolderPathA(nullptr, CSIDL_COMMON_APPDATA, nullptr, 0, seewocore_ini_path))) {
-        strcat_s(seewocore_ini_path, MAX_PATH, "\\Seewo\\SeewoCore\\SeewoCore.ini");
-
+    auto seewoCorePath = HInfo::GetSeewoCoreIniPath();
+    if (seewoCorePath.has_value()) {
         char buf_device[256] = { 0 };
         char buf_admin_v1[100] = { 0 };
         char buf_admin_v2[100] = { 0 };
         char buf_admin_v3[100] = { 0 };
-        GetPrivateProfileStringA("device", "id", "", buf_device, sizeof(buf_device), seewocore_ini_path);
-        GetPrivateProfileStringA("ADMIN", "PASSWORDV1", "", buf_admin_v1, sizeof(buf_admin_v1), seewocore_ini_path);
-        GetPrivateProfileStringA("ADMIN", "PASSWORDV2", "", buf_admin_v2, sizeof(buf_admin_v2), seewocore_ini_path);
-        GetPrivateProfileStringA("ADMIN", "PASSWORDV3", "", buf_admin_v3, sizeof(buf_admin_v3), seewocore_ini_path);
+        GetPrivateProfileStringA("device", "id", "", buf_device, sizeof(buf_device), seewoCorePath->c_str());
+        GetPrivateProfileStringA("ADMIN", "PASSWORDV1", "", buf_admin_v1, sizeof(buf_admin_v1), seewoCorePath->c_str());
+        GetPrivateProfileStringA("ADMIN", "PASSWORDV2", "", buf_admin_v2, sizeof(buf_admin_v2), seewoCorePath->c_str());
+        GetPrivateProfileStringA("ADMIN", "PASSWORDV3", "", buf_admin_v3, sizeof(buf_admin_v3), seewoCorePath->c_str());
 
         device_id = buf_device;
 
@@ -68,14 +66,13 @@ std::vector<CrackTask> AutoInfoAcquirer::acquire() {
         if (strlen(buf_admin_v2) > 0)
             tasks.push_back({ MODE_V2, TYPE_ADMIN, buf_admin_v2, device_id, "" });
         if (strlen(buf_admin_v3) > 0)
-            tasks.push_back({ MODE_V3, TYPE_ADMIN, buf_admin_v3, device_id, machine_id });
+            tasks.push_back({ MODE_V3, TYPE_ADMIN, buf_admin_v3, device_id, "" });
     }
 
-    if (SUCCEEDED(SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, lock_ini_path))) {
-        strcat_s(lock_ini_path, MAX_PATH, "\\seewo\\SeewoAbility\\SeewoLockConfig.ini");
-
+    auto lockConfigPath = HInfo::GetLockConfigIniPath();
+    if (lockConfigPath.has_value()) {
         FILE* fp = nullptr;
-        errno_t err = fopen_s(&fp, lock_ini_path, "r");
+        errno_t err = fopen_s(&fp, lockConfigPath->c_str(), "r");
         if (err == 0 && fp) {
             char line[256] = { 0 };
             std::string lock_v1, lock_v2, lock_v3;
@@ -100,29 +97,13 @@ std::vector<CrackTask> AutoInfoAcquirer::acquire() {
             if (!lock_v2.empty())
                 tasks.push_back({ MODE_V2, TYPE_LOCK, lock_v2, device_id, "" });
             if (!lock_v3.empty())
-                tasks.push_back({ MODE_V3, TYPE_LOCK, lock_v3, device_id, machine_id });
+                tasks.push_back({ MODE_V3, TYPE_LOCK, lock_v3, device_id, "" });
         }
     }
 
-    // Read machine ID (for V3 tasks)
-    char buffer[128] = { 0 };
-    DWORD buffer_size = sizeof(buffer);
-    HKEY hKey;
-    LONG result = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-        "SOFTWARE\\Microsoft\\SQMClient",
-        0, KEY_READ | KEY_WOW64_64KEY, &hKey);
-    if (result != ERROR_SUCCESS) {
-        result = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-            "SOFTWARE\\Microsoft\\SQMClient",
-            0, KEY_READ, &hKey);
-    }
-    if (result == ERROR_SUCCESS) {
-        result = RegQueryValueExA(hKey, "MachineId", nullptr, nullptr,
-            reinterpret_cast<LPBYTE>(buffer), &buffer_size);
-        RegCloseKey(hKey);
-        if (result == ERROR_SUCCESS) {
-            machine_id = buffer;
-        }
+    auto machineIdOpt = HInfo::GetMachineId();
+    if (machineIdOpt.has_value()) {
+        machine_id = machineIdOpt.value();
     }
 
     for (auto& task : tasks) {

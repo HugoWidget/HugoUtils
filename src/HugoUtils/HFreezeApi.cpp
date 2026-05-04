@@ -27,13 +27,41 @@
 
 #include "HugoUtils/HFreezeApi.h"
 #include "WinUtils/Logger.h"
+#include <WinUtils/StrConvert.h>
+#include "HugoUtils/HugoString.h"
+using namespace HugoUtils::FreezeApiInvalidStrings;
 using namespace WinUtils;
 using namespace std;
 static Logger logger(L"HFreezeApi");
+
 wstring ToUpper(wstring_view str) noexcept {
 	wstring res(str);
 	transform(res.begin(), res.end(), res.begin(), ::towupper);
 	return res;
+}
+
+bool IsValidGBKChar(wchar_t ch) {
+	if (ch <= 0x1F || ch == 0x7F) {
+		if (ch != 0x09 && ch != 0x0A && ch != 0x0D) return false;
+	}
+	if (ch == L'\uFFFD') {
+		return false;
+	}
+	const bool isBasicLatin = (ch >= 0x20 && ch <= 0x7E);
+	const bool isChineseSymbol = (ch >= 0x3000 && ch <= 0x303F);
+	const bool isChineseChar = (ch >= 0x4E00 && ch <= 0x9FA5);
+	const bool isFullWidthChar = (ch >= 0xFF00 && ch <= 0xFFEF);
+	return isBasicLatin || isChineseSymbol || isChineseChar || isFullWidthChar;
+}
+
+std::wstring CleanInvalidGBKChars(const std::wstring& gbk_str) {
+	std::wstring result = gbk_str;
+	auto valid_end = std::remove_if(
+		result.begin(), result.end(),
+		[](wchar_t ch) { return !IsValidGBKChar(ch); }
+	);
+	result.erase(valid_end, result.end());
+	return result;
 }
 
 FreezeResult HFreezeApi::Init() noexcept {
@@ -127,8 +155,13 @@ FreezeResult HFreezeApi::SetFreezeState(
 	const std::wstring params = L"vol=" + std::to_wstring(vol);
 
 	logger.DLog(LogLevel::Info, std::format(L"Sending GET request: {}:{}{}?{}", DEFAULT_IP, m_port, path, params));
-	std::wstring response = m_httpClient.getData(DEFAULT_IP, path.c_str(), params.c_str());
 
+	std::wstring response = Utf8ToWide(WideToAnsi(m_httpClient.getData(DEFAULT_IP, path.c_str(), params.c_str())));
+	response = CleanInvalidGBKChars(response);
+	size_t pos = response.find(Str1);
+	if (pos != wstring::npos)response = response.substr(0, pos + 3) + Str3 + response.substr(pos + 4);
+	size_t pos2 = response.find(Str2);
+	if (pos2 != wstring::npos)response = response.substr(0, pos2 + 3) + Str3 + response.substr(pos2 + 4);
 	logger.DLog(LogLevel::Debug, std::format(L"SetFreezeState response: {}", response));
 	return FreezeResult(response != L"" ? FrzOR::Success : FrzOR::Failed)
 		.setMsg(response);
