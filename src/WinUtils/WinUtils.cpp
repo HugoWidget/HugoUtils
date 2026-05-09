@@ -1,4 +1,4 @@
-/*
+﻿/*
  * The MIT License (MIT)
  * Copyright (c) 2026 howdy213
  *
@@ -41,6 +41,13 @@ using namespace WinUtils;
 constexpr const wchar_t* MONITOR_WND_CLASS = L"WinUtils_ProcessMonitor_Class";
 namespace {
 	Logger logger(TS("WinUtils"));
+
+	struct MonitorSessionParam {
+		HINSTANCE            hInstance;
+		std::vector<string_t> targetProcesses;
+		int                  checkInterval;
+		HANDLE               hStopEvent;   // manual‑reset event for stopping
+	};
 
 	struct MonitorThreadParam {
 		HANDLE exitEvent;
@@ -509,57 +516,117 @@ namespace WinUtils {
 		return RunExternalProgram(item.program, op, item.params, TS(""), item.showWnd);
 	}
 
-	int MonitorAndTerminateProcesses(HINSTANCE hInstance, const std::vector<string_t>& targetProcesses, int checkInterval) {
+	// Runs message loop + stop event wait; cleans up when done
+	DWORD WINAPI MonitorSessionThread(LPVOID lpParam) {
+		// Own the session parameter
+		auto param = static_cast<MonitorSessionParam*>(lpParam);
+		if (!param) return 1;
+
+		// Register window class (ignored if already registered)
 		WNDCLASSW wc{};
 		wc.lpfnWndProc = MonitorWindowProc;
-		wc.hInstance = hInstance;
+		wc.hInstance = param->hInstance;
 		wc.lpszClassName = MONITOR_WND_CLASS;
-		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+		wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
 		wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+		RegisterClassW(&wc); // failure is acceptable if already exists
 
-		if (RegisterClassW(&wc) == 0) {
-			logger.DLog(LogLevel::Error, format(TS("RegisterClassW fail: {}"), GetWindowsErrorMsg()));
-			return 1;
-		}
-
-		HWND hwnd = CreateWindowExW(0, MONITOR_WND_CLASS, L"Process Monitor", 0,
-			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-			nullptr, nullptr, hInstance, nullptr);
+		// Create hidden message-only window
+		HWND hwnd = CreateWindowExW(0, MONITOR_WND_CLASS, L"", 0,
+			0, 0, 0, 0, HWND_MESSAGE, nullptr,
+			param->hInstance, nullptr);
 		if (!hwnd) {
-			UnregisterClassW(MONITOR_WND_CLASS, hInstance);
+			delete param;
 			return 1;
 		}
 
+		// Exit event for the monitoring worker thread
 		HANDLE hExitEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
 		if (!hExitEvent) {
 			DestroyWindow(hwnd);
-			UnregisterClassW(MONITOR_WND_CLASS, hInstance);
+			delete param;
 			return 1;
 		}
 
-		auto param = new MonitorThreadParam{ hExitEvent, targetProcesses, checkInterval };
-		HANDLE hMonitorThread = CreateThread(nullptr, 0, MonitorThread, param, 0, nullptr);
+		// Start the worker thread that periodically kills processes
+		auto threadParam = new MonitorThreadParam{ hExitEvent,
+												   param->targetProcesses,
+												   param->checkInterval };
+		HANDLE hMonitorThread = CreateThread(nullptr, 0, MonitorThread, threadParam, 0, nullptr);
 		if (!hMonitorThread) {
-			delete param;
+			delete threadParam;
 			CloseHandle(hExitEvent);
 			DestroyWindow(hwnd);
-			UnregisterClassW(MONITOR_WND_CLASS, hInstance);
+			delete param;
 			return 1;
 		}
 
-		MSG msg{};
-		while (GetMessageW(&msg, nullptr, 0, 0)) {
-			TranslateMessage(&msg);
-			DispatchMessageW(&msg);
+		// Message loop that also waits on the stop event
+		HANDLE waitHandles[2] = { param->hStopEvent, nullptr };
+		while (true) {
+			DWORD dwWait = MsgWaitForMultipleObjects(1, &param->hStopEvent, FALSE,
+				INFINITE, QS_ALLINPUT);
+			if (dwWait == WAIT_OBJECT_0) {
+				// External stop request
+				break;
+			}
+			else if (dwWait == WAIT_OBJECT_0 + 1) {
+				MSG msg;
+				while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
+					if (msg.message == WM_QUIT) goto quitLoop; // window destroyed
+					TranslateMessage(&msg);
+					DispatchMessageW(&msg);
+				}
+			}
+			else {
+				break; // error
+			}
 		}
+	quitLoop:
 
+		// Signal worker to stop and wait for it
 		SetEvent(hExitEvent);
 		WaitForSingleObject(hMonitorThread, INFINITE);
 		CloseHandle(hMonitorThread);
 		CloseHandle(hExitEvent);
-		DestroyWindow(hwnd);
-		UnregisterClassW(MONITOR_WND_CLASS, hInstance);
 
+		// Destroy window (do NOT unregister class — shared)
+		DestroyWindow(hwnd);
+
+		delete param;
 		return 0;
+	}
+
+	MonitorHandle StartProcessMonitor(HINSTANCE hInstance,
+		const std::vector<string_t>& targetProcesses,
+		int checkIntervalMs) {
+		MonitorHandle handle;
+		handle.hStopEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+		if (!handle.hStopEvent) return handle;
+
+		auto param = new MonitorSessionParam{
+			hInstance, targetProcesses, checkIntervalMs, handle.hStopEvent
+		};
+
+		handle.hThread = CreateThread(nullptr, 0, MonitorSessionThread, param, 0, nullptr);
+		if (!handle.hThread) {
+			CloseHandle(handle.hStopEvent);
+			handle.hStopEvent = nullptr;
+			delete param;
+		}
+		return handle;
+	}
+
+	void StopProcessMonitor(MonitorHandle& handle) {
+		if (handle.hStopEvent) {
+			SetEvent(handle.hStopEvent);
+			if (handle.hThread) {
+				WaitForSingleObject(handle.hThread, INFINITE);
+				CloseHandle(handle.hThread);
+				handle.hThread = nullptr;
+			}
+			CloseHandle(handle.hStopEvent);
+			handle.hStopEvent = nullptr;
+		}
 	}
 }

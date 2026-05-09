@@ -91,5 +91,18 @@ namespace WinUtils {
 	// Program Execution & Monitoring
 	WUAPI HINSTANCE RunExternalProgram(string_t lpFile, string_t lpOperation = TS("open"), string_t lpParameters = TS(""), string_t lpDirectory = TS(""), int showCmd = SW_NORMAL);
 	WUAPI HINSTANCE RunExternalProgram(const LaunchItem& item);
-	WUAPI int MonitorAndTerminateProcesses(HINSTANCE hInstance, const std::vector<string_t>& targetProcesses, int checkInterval = 1000);
+
+	// Process monitor control handle 
+	struct MonitorHandle {
+		HANDLE hStopEvent = nullptr;   // manual-reset event, set to request stop
+		HANDLE hThread = nullptr;   // background session thread handle
+	};
+
+	// Start a background process monitor. Returns a handle;
+	MonitorHandle StartProcessMonitor(HINSTANCE hInstance,
+		const std::vector<string_t>& targetProcesses,
+		int checkIntervalMs);
+
+	// Stop a monitor previously started by StartProcessMonitor. Blocks until fully stopped.
+	void StopProcessMonitor(MonitorHandle& handle);
 }

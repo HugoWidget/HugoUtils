@@ -53,7 +53,10 @@ FreezeResult HFreezeDriver::Init() noexcept {
 }
 
 void HFreezeDriver::Cleanup() noexcept {
-    if (IsInitialized())CloseHandle(m_hDriver);
+    if (IsInitialized()) {
+        CloseHandle(m_hDriver);
+        m_hDriver = 0;
+    }
 }
 
 bool HFreezeDriver::IsInitialized() const noexcept {
