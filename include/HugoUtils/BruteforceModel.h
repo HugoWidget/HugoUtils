@@ -42,6 +42,13 @@ struct CrackResult {
     std::string error_message;
 };
 
+struct CorrespondTask {
+    CrackMode mode;
+    std::string ciphertext;
+    std::string device_id;
+    std::string machine_id;
+    std::string inputpwd;
+};
 class InfoAcquirer {
 public:
     virtual ~InfoAcquirer() = default;
@@ -54,6 +61,7 @@ public:
     virtual bool canHandle(const CrackTask& task) const = 0;
     // return plaintext,empty if it fails
     virtual std::string decrypt(const CrackTask& task) = 0;
+    virtual bool isPwdCorrespond(const CorrespondTask& task) = 0;
 };
 
 class ResultOutput {
