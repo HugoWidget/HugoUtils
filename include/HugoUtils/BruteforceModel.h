@@ -32,6 +32,7 @@ struct CrackTask {
     std::string ciphertext;      
     std::string device_id;       
     std::string machine_id;
+    std::string method;
 };
 
 struct CrackResult {

@@ -33,6 +33,17 @@ namespace fs = std::filesystem;
 
 static Logger logger(L"HInfo");
 
+// Private helper: get SysWOW64 folder (32-bit system directory)
+optional<fs::path> HInfo::GetSysWow64Path()
+{
+    wchar_t sysWow64[MAX_PATH] = { 0 };
+    // GetSystemWow64DirectoryW returns the path to the 32-bit system directory
+    if (GetSystemWow64DirectoryW(sysWow64, MAX_PATH) != 0) {
+        return fs::path(sysWow64);
+    }
+    logger.Error(L"Failed to retrieve SysWOW64 directory");
+    return nullopt;
+}
 
 // Private helper: find first directory matching prefix
 optional<fs::path> HInfo::FindFirstDirectory(
@@ -230,6 +241,16 @@ optional<fs::path> HInfo::GetLockConfigIniPath2()
         return *base / L"seewo\\SeewoAbility\\.lock_backup";
     }
     return nullopt;
+}
+
+// Public: C:\Windows\SysWOW64\config\systemprofile\AppData\Roaming\school.ini
+optional<fs::path> HInfo::GetSeewoSchoolFilePath()
+{
+    auto sysWow64 = GetSysWow64Path();
+    if (!sysWow64) return nullopt;
+
+    fs::path fullPath = *sysWow64 / L"config\\systemprofile\\AppData\\Roaming\\seewo\\school.ini";
+    return fullPath;
 }
 
 #endif // !HU_DISABLE_INFO

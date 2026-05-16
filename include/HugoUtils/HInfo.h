@@ -54,11 +54,16 @@ public:
     // Path to .lock_backup (user appdata)
     static std::optional<std::filesystem::path> GetLockConfigIniPath2();
 
+    // Path to school.ini under system account's AppData\Roaming
+    static std::optional<std::filesystem::path> GetSeewoSchoolFilePath();
 private:
     static inline const std::filesystem::path SEEWO_SERVICE_BASE = L"C:\\Program Files (x86)\\Seewo\\SeewoService";
     static inline const std::wstring_view SEEWO_SERVICE_PREFIX = L"SeewoService_";
     static inline const std::filesystem::path EASIUPDATE_BASE = L"C:\\ProgramData\\Seewo\\Easiupdate3";
     static inline const std::wstring_view EASIUPDATE_PREFIX = L"Easiupdate3";
+
+    // Helper to obtain SysWOW64 folder
+    static std::optional<std::filesystem::path> GetSysWow64Path();
 
     // Find the first directory whose name starts with the given prefix
     static std::optional<std::filesystem::path> FindFirstDirectory(
