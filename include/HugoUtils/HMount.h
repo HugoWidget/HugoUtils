@@ -110,7 +110,9 @@ public:
 	void PrintPartitionsInfo(const HugoMountInfo::DiskInfo& disk) const;
 	std::expected<std::string, DWORD> GetDriverFileVersion(const std::string& path) const;
 	int Mount(int diskId, int partId, char driveLetter = 0) const;
-	int Unmount(int diskId = -1, int partId = -1, char driveLetter = 0) const;
+	int Unmount(int diskId, int partId) const;
+	int Unmount(char driveLetter) const;
+	std::vector<char> FindMountedDrive(int diskId, int partId);
 private:
 	char GetFirstAvailableDrive() const;
 	DWORD FindDriveLetter(int diskId, int partId, char& outLetter) const;

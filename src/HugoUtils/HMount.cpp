@@ -377,28 +377,22 @@ int HMount::Mount(int diskId, int partId, char driveLetter) const {
 	return static_cast<int>(ret);
 }
 
-// Unmounts a previously mounted drive. The drive can be specified by disk/partition ID or directly by letter.
-// Returns 0 on success, otherwise an error code.
-int HMount::Unmount(int diskId, int partId, char driveLetter) const {
+// Unmount by disk and partition IDs (auto-search for corresponding drive letter)
+int HMount::Unmount(int diskId, int partId) const {
 	logger.DLog(LogLevel::Info,
-		format(L"Executing unmount command: Disk{} Partition{}, specified drive letter: {}", diskId, partId, driveLetter ? wstring(1, (wchar_t)driveLetter) : L"auto-search"));
+		format(L"Executing unmount command: Disk{} Partition{}, auto-search drive letter", diskId, partId));
 
-	// If disk/partition IDs are given, find the corresponding drive letter
-	if (diskId >= 0 && partId >= 0) {
-		if (FindDriveLetter(diskId, partId, driveLetter) != 0) {
-			cout << "Error: No drive letter found for Disk " << diskId << " Partition " << partId << ".\n";
-			return -1;
-		}
-	}
-	else if (driveLetter == 0) {
-		cout << "Error: Invalid arguments - specify drive letter or disk/partition number.\n";
+	if (diskId < 0 || partId < 0) {
+		cout << "Error: Invalid disk or partition ID.\n";
 		return -1;
 	}
-	else {
-		driveLetter = static_cast<char>(toupper(driveLetter));
+
+	char driveLetter = 0;
+	if (FindDriveLetter(diskId, partId, driveLetter) != 0) {
+		cout << "Error: No drive letter found for Disk " << diskId << " Partition " << partId << ".\n";
+		return -1;
 	}
 
-	// Perform the actual link removal
 	DWORD ret = DoUnlink(driveLetter);
 	if (ret == 0) {
 		cout << "Unmounted " << driveLetter << ":\\" << "\n";
@@ -408,6 +402,52 @@ int HMount::Unmount(int diskId, int partId, char driveLetter) const {
 		cout << "Error: Unmount failed (Code " << ret << ").\n";
 		return static_cast<int>(ret);
 	}
+}
+
+// Unmount by drive letter (e.g. 'C', 'D', etc.)
+int HMount::Unmount(char driveLetter) const {
+	if (driveLetter == 0) {
+		cout << "Error: Invalid arguments - drive letter not specified.\n";
+		return -1;
+	}
+
+	driveLetter = static_cast<char>(toupper(driveLetter));
+	logger.DLog(LogLevel::Info,
+		format(L"Executing unmount command: specified drive letter: {}", wstring(1, (wchar_t)driveLetter)));
+
+	DWORD ret = DoUnlink(driveLetter);
+	if (ret == 0) {
+		cout << "Unmounted " << driveLetter << ":\\" << "\n";
+		return 0;
+	}
+	else {
+		cout << "Error: Unmount failed (Code " << ret << ").\n";
+		return static_cast<int>(ret);
+	}
+}
+
+std::vector<char> HMount::FindMountedDrive(int diskId, int partId)
+{
+    std::vector<char> Letter={};
+    char targetPath[MAX_PATH] = {};
+    sprintf_s(targetPath, VDK_NT_PATH_FMT, diskId, partId);
+    logger.DLog(LogLevel::Debug,
+                format(L"Searching for drive letter: {}", ConvertString<wstring>(targetPath)));
+
+    char driveStr[4] = "A:";
+    char queryBuf[MAX_PATH] = {};
+    string drives = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";//GetDrivesInUse(); //GetLogicalDrives();
+
+    for (char letter : drives) {
+        driveStr[0] = letter;
+        if (QueryDosDeviceA(driveStr, queryBuf, MAX_PATH) > 0) {
+            if ((string)queryBuf == (string)targetPath) {
+                Letter.push_back( letter);
+            }
+        }
+    }
+
+    return Letter;
 }
 
 // ----------------------------------------------------------------------

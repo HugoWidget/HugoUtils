@@ -33,6 +33,8 @@ namespace fs = std::filesystem;
 
 static Logger logger(L"HInfo");
 
+
+// Private helper: find first directory matching prefix
 optional<fs::path> HInfo::FindFirstDirectory(
     const fs::path& baseDir,
     wstring_view prefix)
@@ -54,6 +56,8 @@ optional<fs::path> HInfo::FindFirstDirectory(
     return nullopt;
 }
 
+
+// Private helper: find all directories matching prefix
 vector<fs::path> HInfo::FindAllDirectories(
     const fs::path& baseDir,
     wstring_view prefix)
@@ -76,6 +80,8 @@ vector<fs::path> HInfo::FindAllDirectories(
     return result;
 }
 
+
+// Private helper: extract version from directory name (e.g., "SeewoService_1.2.3.4")
 optional<wstring> HInfo::ExtractVersionFromDirName(const fs::path& dirPath)
 {
     wstring dirName = dirPath.filename().wstring();
@@ -86,6 +92,51 @@ optional<wstring> HInfo::ExtractVersionFromDirName(const fs::path& dirPath)
     return nullopt;
 }
 
+
+// Private helper: get a known folder path as a filesystem::path
+optional<fs::path> HInfo::GetKnownFolderPath(int csidl)
+{
+    wchar_t path[MAX_PATH] = { 0 };
+    if (SUCCEEDED(SHGetFolderPathW(nullptr, csidl, nullptr, 0, path))) {
+        return fs::path(path);
+    }
+    return nullopt;
+}
+
+
+// Private helper: read MachineId from registry (64-bit view preferred)
+optional<string> HInfo::ReadRegistryMachineId()
+{
+    char buffer[128] = { 0 };
+    DWORD size = sizeof(buffer);
+    HKEY hKey;
+
+    // Try 64-bit view first
+    LONG result = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\SQMClient",
+        0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+    if (result != ERROR_SUCCESS) {
+        // Fall back to default (32-bit) view
+        result = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+            "SOFTWARE\\Microsoft\\SQMClient",
+            0, KEY_READ, &hKey);
+    }
+    if (result != ERROR_SUCCESS) {
+        return nullopt;
+    }
+
+    result = RegQueryValueExA(hKey, "MachineId", nullptr, nullptr,
+        reinterpret_cast<LPBYTE>(buffer), &size);
+    RegCloseKey(hKey);
+
+    if (result != ERROR_SUCCESS) {
+        return nullopt;
+    }
+    return string(buffer);
+}
+
+
+// Public: get SeewoService version string
 optional<wstring> HInfo::getHugoVersion()
 {
     auto foundDir = FindFirstDirectory(SEEWO_SERVICE_BASE, SEEWO_SERVICE_PREFIX);
@@ -96,91 +147,89 @@ optional<wstring> HInfo::getHugoVersion()
     return ExtractVersionFromDirName(*foundDir);
 }
 
-optional<wstring> HInfo::getHugoFolder()
+
+// Public: get SeewoService base directory
+optional<fs::path> HInfo::getHugoFolder()
 {
     auto foundDir = FindFirstDirectory(SEEWO_SERVICE_BASE, SEEWO_SERVICE_PREFIX);
     if (!foundDir) {
         logger.Warn(L"SeewoService directory not found");
         return nullopt;
     }
-    return foundDir->wstring() + L'\\';
+    return *foundDir;
 }
 
-optional<wstring> HInfo::getHugoProtectDriverFolder()
+
+// Public: get driver service folder
+optional<fs::path> HInfo::getHugoProtectDriverFolder()
 {
     auto hugoFolder = getHugoFolder();
     if (!hugoFolder) return nullopt;
 
-    fs::path driverFolder = fs::path(*hugoFolder) / L"SeewoDriverService";
+    fs::path driverFolder = *hugoFolder / L"SeewoDriverService";
     if (!fs::is_directory(driverFolder)) return nullopt;
 
-    return driverFolder.wstring() + L'\\';
+    return driverFolder;
 }
 
-optional<wstring> HInfo::getHugoProtectDriverPath()
+
+// Public: get full path to DriverService.exe
+optional<fs::path> HInfo::getHugoProtectDriverPath()
 {
     auto driverFolder = getHugoProtectDriverFolder();
     if (!driverFolder) return nullopt;
 
-    fs::path driverPath = fs::path(*driverFolder) / L"DriverService.exe";
+    fs::path driverPath = *driverFolder / L"DriverService.exe";
     if (!fs::is_regular_file(driverPath)) return nullopt;
 
-    return driverPath.wstring();
+    return driverPath;
 }
 
-vector<wstring> HInfo::getHugoUpdateFolder()
+
+// Public: get all Easiupdate3 directories
+vector<fs::path> HInfo::getHugoUpdateFolder()
 {
-    auto dirs = FindAllDirectories(EASIUPDATE_BASE, EASIUPDATE_PREFIX);
-    vector<wstring> result;
-    result.reserve(dirs.size());
-    for (const auto& d : dirs) {
-        result.push_back(d.wstring() + L'\\');
-    }
-    return result;
+    return FindAllDirectories(EASIUPDATE_BASE, EASIUPDATE_PREFIX);
 }
 
-std::optional<std::string> HInfo::GetMachineId() {
-    char buffer[128] = { 0 };
-    DWORD buffer_size = sizeof(buffer);
-    HKEY hKey;
 
-    LONG result = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-        "SOFTWARE\\Microsoft\\SQMClient",
-        0, KEY_READ | KEY_WOW64_64KEY, &hKey);
-    if (result != ERROR_SUCCESS) {
-        result = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-            "SOFTWARE\\Microsoft\\SQMClient",
-            0, KEY_READ, &hKey);
-    }
-    if (result != ERROR_SUCCESS) {
-        return std::nullopt;
-    }
-
-    result = RegQueryValueExA(hKey, "MachineId", nullptr, nullptr,
-        reinterpret_cast<LPBYTE>(buffer), &buffer_size);
-    RegCloseKey(hKey);
-
-    if (result != ERROR_SUCCESS) {
-        return std::nullopt;
-    }
-    return std::string(buffer);
+// Public: get Windows MachineId
+optional<string> HInfo::GetMachineId()
+{
+    return ReadRegistryMachineId();
 }
 
-std::optional<std::string> HInfo::GetSeewoCoreIniPath() {
-    char path[MAX_PATH] = { 0 };
-    if (SUCCEEDED(SHGetFolderPathA(nullptr, CSIDL_COMMON_APPDATA, nullptr, 0, path))) {
-        strcat_s(path, MAX_PATH, "\\Seewo\\SeewoCore\\SeewoCore.ini");
-        return std::string(path);
+
+// Public: SeewoCore.ini path (common appdata)
+optional<fs::path> HInfo::GetSeewoCoreIniPath()
+{
+    auto base = GetKnownFolderPath(CSIDL_COMMON_APPDATA);
+    if (base) {
+        return *base / L"Seewo\\SeewoCore\\SeewoCore.ini";
     }
-    return std::nullopt;
+    return nullopt;
 }
 
-std::optional<std::string> HInfo::GetLockConfigIniPath() {
-    char path[MAX_PATH] = { 0 };
-    if (SUCCEEDED(SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, path))) {
-        strcat_s(path, MAX_PATH, "\\seewo\\SeewoAbility\\SeewoLockConfig.ini");
-        return std::string(path);
+
+// Public: SeewoLockConfig.ini path (user appdata)
+optional<fs::path> HInfo::GetLockConfigIniPath()
+{
+    auto base = GetKnownFolderPath(CSIDL_APPDATA);
+    if (base) {
+        return *base / L"seewo\\SeewoAbility\\SeewoLockConfig.ini";
     }
-    return std::nullopt;
+    return nullopt;
 }
+
+
+// Public: .lock_backup path (user appdata)
+optional<fs::path> HInfo::GetLockConfigIniPath2()
+{
+    auto base = GetKnownFolderPath(CSIDL_APPDATA);
+    if (base) {
+        return *base / L"seewo\\SeewoAbility\\.lock_backup";
+    }
+    return nullopt;
+}
+
 #endif // !HU_DISABLE_INFO
