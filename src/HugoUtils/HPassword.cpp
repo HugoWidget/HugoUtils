@@ -156,6 +156,20 @@ string V1Decryptor::decrypt(const CrackTask& task) {
 	return bruteForce(task.ciphertext);
 }
 
+bool V1Decryptor::isPwdCorrespond(const CorrespondTask &task)
+{
+    if (task.ciphertext.length() != MD5_TRUNCATED_LEN) {
+        return false;
+    }
+    MD5 md5;
+    std::string md5_hex = md5(task.inputpwd);
+    std::string truncated = md5_hex.substr(8, MD5_TRUNCATED_LEN);
+    if (truncated == task.ciphertext) {
+        return true;
+    }
+    return false;
+}
+
 // -------------------- V2Decryptor Implementation --------------------
 V2Decryptor::V2Decryptor() : hugo_md5(PreComputeHugoMd5()) {}
 
@@ -185,6 +199,23 @@ string V2Decryptor::decrypt(const CrackTask& task) {
 		return "";
 	}
 	return bruteForce(task.ciphertext);
+}
+
+bool V2Decryptor::isPwdCorrespond(const CorrespondTask &task)
+{
+    if (task.ciphertext.length() != MD5_TRUNCATED_LEN) {
+        return false;
+    }
+    MD5 md5_pwd;
+    std::string pwd_md5 = md5_pwd(task.inputpwd);
+    std::string combined = pwd_md5 + hugo_md5;
+    MD5 md5_combined;
+    std::string result_md5 = md5_combined(combined);
+    std::string truncated = result_md5.substr(8, MD5_TRUNCATED_LEN);
+    if (truncated == task.ciphertext) {
+        return true;
+    }
+    return false;
 }
 
 // -------------------- V3Decryptor Implementation --------------------
@@ -228,4 +259,29 @@ string V3Decryptor::decrypt(const CrackTask& task) {
 
 	return bruteForce(salt, partB);
 }
+
+bool V3Decryptor::isPwdCorrespond(const CorrespondTask &task)
+{
+    if (task.ciphertext.length() != PASS_V3_VALID_LEN) {
+        return false;
+    }
+    if (task.device_id.empty()) {
+        return false;
+    }
+    std::string partA = task.ciphertext.substr(0, 16);
+    std::string target_hex = task.ciphertext.substr(32, 64);
+    std::string salt = "@" + partA + "!" + task.device_id + "&" + task.machine_id + "^mf-hu90";
+    std::string payload = std::string(task.inputpwd) + salt;
+    SHA256 sha;
+    unsigned char hash_bin[HASH_BIN_LEN];
+    uint8_t target_bin[HASH_BIN_LEN];
+    HexToBin(target_hex, target_bin, HASH_BIN_LEN);
+    sha.add(payload.c_str(), payload.length());
+    sha.getHash(hash_bin);
+    if (memcmp(hash_bin, target_bin, HASH_BIN_LEN) == 0) {
+        return true;
+    }
+    return false;
+}
+
 #endif // !HU_DISABLE_PASSWORD
