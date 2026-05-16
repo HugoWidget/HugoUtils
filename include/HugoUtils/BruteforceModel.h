@@ -33,6 +33,7 @@ struct CrackTask {
     std::string device_id;       
     std::string machine_id;
     std::string method;
+    std::string plaintext;
 };
 
 struct CrackResult {
@@ -54,6 +55,7 @@ public:
     virtual bool canHandle(const CrackTask& task) const = 0;
     // return plaintext,empty if it fails
     virtual std::string decrypt(const CrackTask& task) = 0;
+    virtual bool matched(const CrackTask& task) = 0;
 };
 
 class ResultOutput {
