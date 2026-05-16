@@ -45,6 +45,7 @@ private:
 public:
     bool canHandle(const CrackTask& task) const override;
     std::string decrypt(const CrackTask& task) override;
+    bool isPwdCorrespond(const CorrespondTask& task) override;
 };
 
 class V2Decryptor : public Decryptor {
@@ -55,6 +56,7 @@ public:
     V2Decryptor();
     bool canHandle(const CrackTask& task) const override;
     std::string decrypt(const CrackTask& task) override;
+    bool isPwdCorrespond(const CorrespondTask& task) override;
 };
 
 class V3Decryptor : public Decryptor {
@@ -63,5 +65,6 @@ private:
 public:
     bool canHandle(const CrackTask& task) const override;
     std::string decrypt(const CrackTask& task) override;
+    bool isPwdCorrespond(const CorrespondTask& task) override;
 };
 #endif // !HU_DISABLE_PASSWORD
