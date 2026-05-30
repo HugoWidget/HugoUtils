@@ -28,19 +28,19 @@
 class HInfo {
 public:
     // Returns the extracted version string (e.g., "1.2.3.4") from the SeewoService directory name
-    std::optional<std::wstring> getHugoVersion();
+    static std::optional<std::wstring> getHugoVersion();
 
     // Base directory of the SeewoService installation
-    std::optional<std::filesystem::path> getHugoFolder();
+    static std::optional<std::filesystem::path> getHugoFolder();
 
     // Folder containing the driver service
-    std::optional<std::filesystem::path> getHugoProtectDriverFolder();
+    static std::optional<std::filesystem::path> getHugoProtectDriverFolder();
 
     // Full path to DriverService.exe
-    std::optional<std::filesystem::path> getHugoProtectDriverPath();
+    static std::optional<std::filesystem::path> getHugoProtectDriverPath();
 
     // All update directories under Easiupdate3
-    std::vector<std::filesystem::path> getHugoUpdateFolder();
+    static std::vector<std::filesystem::path> getHugoUpdateFolder();
 
     // Retrieves the Windows MachineId from the registry
     static std::optional<std::string> GetMachineId();
