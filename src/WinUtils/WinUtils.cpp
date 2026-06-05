@@ -311,12 +311,12 @@ namespace WinUtils {
 		return false;
 	}
 
-	void EnsureSingleInstance(string_t title, string_t name, string_t content, string_t extraInfo) {
+	void EnsureSingleInstance(bool exclusive, string_t title, string_t name, string_t content, string_t extraInfo) {
 		if (name.empty()) name = GetCurrentProcessName();
 		if (title.empty()) title = TS("Prompt - ") + name;
 		if (content.empty()) content = TS("The program is already running!\nClick OK to close the existing instance, click Cancel to exit this run.");
 
-		string_t input = TS("WinUtils_SingleInstance_") + name + extraInfo;
+		string_t input = TS("WinUtils_SingleInstance_") + (exclusive ? GetCurrentProcessPath() : name) + extraInfo;
 		size_t hash = std::hash<string_t>{}(input);
 		string_t mutexName = TS("Global\\") + ConvertString(std::to_string(hash));
 
@@ -348,6 +348,25 @@ namespace WinUtils {
 			++pos;
 		}
 		return (pos < cmdLine.size()) ? cmdLine.substr(pos) : L"";
+	}
+
+	std::vector<string_t> ParseCommandLine(const char_t* lpCmdLine) {
+		std::wstring wideCmdLine;
+		if (lpCmdLine == nullptr) {
+			wideCmdLine = GetCommandLineW();
+		}
+		else wideCmdLine = ConvertString<std::wstring>(lpCmdLine);
+		if (wideCmdLine.empty()) return {};
+		int argc = 0;
+		LPWSTR* argv = CommandLineToArgvW(wideCmdLine.c_str(), &argc);
+		if (!argv) return {};
+		std::vector<string_t> result;
+		result.reserve(argc);
+		for (int i = 0; i < argc; ++i) {
+			result.push_back(ConvertString<string_t>(argv[i]));
+		}
+		LocalFree(argv);
+		return result;
 	}
 
 	string_t GetCurrentUserName() {

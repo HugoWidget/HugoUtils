@@ -70,11 +70,12 @@ namespace WinUtils {
 	// Privilege & Instance Management
 	WUAPI bool IsCurrentProcessAdmin();
 	WUAPI bool RequireAdminPrivilege(bool exit = true);
-	WUAPI void EnsureSingleInstance(string_t title = TS(""), string_t name = TS(""), string_t content = TS(""), string_t extraInfo = TS(""));
+	WUAPI void EnsureSingleInstance(bool exclusive,string_t title = TS(""), string_t name = TS(""), string_t content = TS(""), string_t extraInfo = TS(""));
 
 	// Path Handling
-	string_t ExtractArguments(const string_t& cmdLine);
-	string_t GetCurrentUserName();
+	WUAPI string_t ExtractArguments(const string_t& cmdLine);
+	WUAPI std::vector<string_t> ParseCommandLine(const char_t* lpCmdLine = nullptr);
+	WUAPI string_t GetCurrentUserName();
 	WUAPI string_t GetCurrentProcessPath();
 	WUAPI string_t GetCurrentProcessDir();
 	WUAPI string_t GetCurrentProcessName();

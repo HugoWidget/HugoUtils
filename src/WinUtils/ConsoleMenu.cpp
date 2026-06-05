@@ -796,7 +796,7 @@ void ConsoleMenu::execute(string_t input, bool relative) {
 	string_t argsStr = (pos != string_t::npos) ? input.substr(pos + 1) : TS("");
 	string_t cmdName = input.substr(0, pos);
 	Args args;
-	args.parse(argsStr, CmdParser::ParseMode::NoFlag);
+	(void)args.parse(argsStr, CmdParser::ParseMode::NoFlag);
 
 	// Check common commands first
 	auto commonIt = m_commonCommands.find(cmdName);
