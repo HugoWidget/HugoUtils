@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include "WinUtils/Console.h"
+#include <conio.h>
 using namespace WinUtils;
 bool Console::attach()
 {
@@ -96,6 +97,32 @@ bool Console::setVirtualConsole(bool enable)
 		}
 	}
 	return false;
+}
+bool Console::clear()
+{
+	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (hStdOut == INVALID_HANDLE_VALUE) return false;
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	if (!GetConsoleScreenBufferInfo(hStdOut, &csbi)) return false;
+
+	DWORD cellCount = csbi.dwSize.X * csbi.dwSize.Y;
+	COORD homeCoord = { 0, 0 };
+	DWORD count;
+
+	if (!FillConsoleOutputCharacter(hStdOut, ' ', cellCount, homeCoord, &count))
+		return false;
+	if (!FillConsoleOutputAttribute(hStdOut, csbi.wAttributes, cellCount, homeCoord, &count))
+		return false;
+
+	SetConsoleCursorPosition(hStdOut, homeCoord);
+	return true;
+}
+int Console::get()
+{
+	if (!hasConsole) return EOF;
+	wint_t ch = _getwch();
+	return (ch == WEOF) ? EOF : (int)ch;
 }
 void Console::redirect()
 {

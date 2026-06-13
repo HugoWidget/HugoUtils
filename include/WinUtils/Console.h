@@ -38,6 +38,8 @@ namespace WinUtils {
 		void setLocale();
 		bool setVisible(bool visible);
 		bool setVirtualConsole(bool enable);
+		bool clear();
+		int get();
 	private:
 		void redirect();
 		bool hasConsole = false;

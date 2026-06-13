@@ -31,6 +31,7 @@
 #include <functional>
 #include <optional>
 #include <chrono>
+#include <filesystem>
 
 #include "WinUtilsDef.h"
 #include "AWDef.h"
@@ -70,21 +71,30 @@ namespace WinUtils {
 	// Privilege & Instance Management
 	WUAPI bool IsCurrentProcessAdmin();
 	WUAPI bool RequireAdminPrivilege(bool exit = true);
-	WUAPI void EnsureSingleInstance(bool exclusive,string_t title = TS(""), string_t name = TS(""), string_t content = TS(""), string_t extraInfo = TS(""));
+	WUAPI void EnsureSingleInstance(bool exclusive, string_t title = TS(""), string_t name = TS(""), string_t content = TS(""), string_t extraInfo = TS(""));
 
-	// Path Handling
+	// Command Line Handling
 	WUAPI string_t ExtractArguments(const string_t& cmdLine);
 	WUAPI std::vector<string_t> ParseCommandLine(const char_t* lpCmdLine = nullptr);
+
+	// Path Handling
 	WUAPI string_t GetCurrentUserName();
 	WUAPI string_t GetCurrentProcessPath();
 	WUAPI string_t GetCurrentProcessDir();
 	WUAPI string_t GetCurrentProcessName();
+
 	WUAPI string_t GetFileNameFromPath(string_view_t path);
 	WUAPI string_t GetDirFromPath(string_view_t path);
 	WUAPI bool IsBareFileName(const string_t& path);
 	WUAPI string_t NormalizeAbsolutePath(const string_t& path);
 	WUAPI void CleanupPath(string_t& path);
 	WUAPI string_t ResolvePath(const string_t& path, const string_t& baseDir = TS(""));
+
+	// Filesystem Path Handling
+	WUAPI std::filesystem::path GetCurrentProcessFSPath();
+	WUAPI std::filesystem::path GetCurrentProcessFSDir();
+	WUAPI bool IsBareFileName(const std::filesystem::path& path);
+	WUAPI std::filesystem::path ResolveFSPath(const std::filesystem::path& path, const std::filesystem::path& baseDir = {});
 
 	// Error Handling
 	WUAPI string_t GetWindowsErrorMsg(DWORD error_code = GetLastError()) noexcept;

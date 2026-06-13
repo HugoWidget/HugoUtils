@@ -27,6 +27,7 @@
 #include <thread>
 #include <algorithm>
 #include <ranges>
+#include <filesystem>
 
 #include "WinUtils/WinUtils.h"
 #include "WinUtils/Logger.h"
@@ -38,6 +39,7 @@
 
 using namespace std;
 using namespace WinUtils;
+namespace fs = std::filesystem;
 constexpr const wchar_t* MONITOR_WND_CLASS = L"WinUtils_ProcessMonitor_Class";
 namespace {
 	Logger logger(TS("WinUtils"));
@@ -293,16 +295,13 @@ namespace WinUtils {
 		return ret && elevation.TokenIsElevated != 0;
 	}
 
-	//Directly use wide string 
 	bool RequireAdminPrivilege(bool exit) {
 		if (IsCurrentProcessAdmin()) return true;
-		wchar_t path[MAX_PATH] = { 0 };
-		GetModuleFileNameW(nullptr, path, _countof(path));
-		wstring exePath = path;
+		string_t exePath = GetCurrentProcessPath();
 		int argc = 0;
-		wstring params = ExtractArguments(TF(GetCommandLine)());
+		string_t params = ExtractArguments(TF(GetCommandLine)());
 
-		HINSTANCE hResult = ShellExecuteW(nullptr, L"runas", exePath.c_str(),
+		HINSTANCE hResult = TF(ShellExecute)(nullptr, TS("runas"), exePath.c_str(),
 			params.c_str(), nullptr, SW_SHOWNORMAL);
 		if (reinterpret_cast<INT_PTR>(hResult) > 32) {
 			if (exit) ExitProcess(0);
@@ -329,25 +328,24 @@ namespace WinUtils {
 		}
 	}
 
-
-	// Path Handling
+	// Command Line Handling
 	string_t ExtractArguments(const string_t& cmdLine)
 	{
-		if (cmdLine.empty()) return L"";
+		if (cmdLine.empty()) return TS("");
 		size_t pos = 0;
-		if (cmdLine[0] == L'\"')
+		if (cmdLine[0] == TS('\"'))
 		{
-			pos = cmdLine.find(L'\"', 1);
+			pos = cmdLine.find(TS('\"'), 1);
 			if (pos != wstring::npos) ++pos;
-			while (pos < cmdLine.size() && cmdLine[pos] == L' ') ++pos;
+			while (pos < cmdLine.size() && cmdLine[pos] == TS(' ')) ++pos;
 		}
 		else
 		{
-			pos = cmdLine.find(L' ');
-			if (pos == wstring::npos) return L"";
+			pos = cmdLine.find(TS(' '));
+			if (pos == wstring::npos) return TS("");
 			++pos;
 		}
-		return (pos < cmdLine.size()) ? cmdLine.substr(pos) : L"";
+		return (pos < cmdLine.size()) ? cmdLine.substr(pos) : TS("");
 	}
 
 	std::vector<string_t> ParseCommandLine(const char_t* lpCmdLine) {
@@ -369,6 +367,7 @@ namespace WinUtils {
 		return result;
 	}
 
+	// Path Handling
 	string_t GetCurrentUserName() {
 		char_t userName[UNLEN + 1] = {};
 		DWORD len = UNLEN;
@@ -498,6 +497,43 @@ namespace WinUtils {
 		CleanupPath(fullPath);
 		// normalize and return
 		return NormalizeAbsolutePath(fullPath);
+	}
+
+	fs::path GetCurrentProcessFSPath()
+	{
+		return GetCurrentProcessPath();
+	}
+
+	fs::path GetCurrentProcessFSDir()
+	{
+		return GetCurrentProcessDir();
+	}
+
+	bool IsBareFileName(const std::filesystem::path& path)
+	{
+		return path == path.filename() && !path.has_root_name();
+	}
+
+	fs::path ResolveFSPath(const fs::path& path, const fs::path& baseDir) {
+		if (IsBareFileName(path))
+			return path;
+		fs::path effectiveBase = baseDir.empty()
+			? GetCurrentProcessFSDir()
+			: baseDir;
+
+		if (!effectiveBase.empty())
+			effectiveBase /= L"";
+
+		fs::path fullPath;
+		if (path.is_absolute() ||
+			(path.has_root_name() && path.has_root_directory()) ||
+			(!path.has_root_name() && path.has_root_directory()))
+		{
+			fullPath = path;
+		}
+		else fullPath = effectiveBase / path;
+		
+		return fullPath.lexically_normal();
 	}
 
 	// Error handling

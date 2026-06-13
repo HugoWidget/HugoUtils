@@ -126,14 +126,15 @@ namespace WinUtils
 
 	INIReader::T_LineData INIReader::readFile()
 	{
-		pImpl->fileReadStream.seekg(0, std::ios::end);
-		const std::size_t fileSize = static_cast<std::size_t>(pImpl->fileReadStream.tellg());
-		pImpl->fileReadStream.seekg(0, std::ios::beg);
+		auto& fileReadStream = pImpl->fileReadStream;
+		fileReadStream.seekg(0, std::ios::end);
+		const std::size_t fileSize = static_cast<std::size_t>(fileReadStream.tellg());
+		fileReadStream.seekg(0, std::ios::beg);
 		if (fileSize >= 3) {
 			const char_t header[3] = {
-				static_cast<char_t>(pImpl->fileReadStream.get()),
-				static_cast<char_t>(pImpl->fileReadStream.get()),
-				static_cast<char_t>(pImpl->fileReadStream.get())
+				static_cast<char_t>(fileReadStream.get()),
+				static_cast<char_t>(fileReadStream.get()),
+				static_cast<char_t>(fileReadStream.get())
 			};
 			isBOM = (
 				header[0] == static_cast<char_t>(0xEF) &&
@@ -145,18 +146,19 @@ namespace WinUtils
 			isBOM = false;
 		}
 		string_t fileContents;
-		fileContents.resize(fileSize);
-		pImpl->fileReadStream.seekg(isBOM ? 3 : 0, std::ios::beg);
-		pImpl->fileReadStream.read(fileContents.data(), fileSize);
-		pImpl->fileReadStream.close();
+		const std::size_t contentSize = (isBOM ? fileSize - 3 : fileSize);
+		fileContents.resize(contentSize);
+		fileReadStream.seekg(isBOM ? 3 : 0, std::ios::beg);
+		fileReadStream.read(fileContents.data(), contentSize);
+		fileReadStream.close();
 		T_LineData output;
-		if (fileSize == 0)
+		if (contentSize == 0)
 		{
 			return output;
 		}
 		string_t buffer;
 		buffer.reserve(50);
-		for (std::size_t i = 0; i < fileSize; ++i)
+		for (std::size_t i = 0; i < contentSize; ++i)
 		{
 			const char_t& c = fileContents[i];
 			if (c == '\n')

@@ -81,16 +81,34 @@ namespace WinUtils
 		[[nodiscard]] const_iterator begin() const;
 		[[nodiscard]] const_iterator end() const;
 
-		template<typename U>
-		[[nodiscard]] U get_as(string_t key, U default_value) const
-		{
-			T val = get(key);
-			if (val.empty()) return default_value;
-			istringstream_t iss(val);
-			U result;
-			iss >> std::boolalpha >> result;
-			if (iss.fail()) return default_value;
-			return result;
+        template<typename U>
+        [[nodiscard]] U get_as(string_t key, U default_value) const {
+            T val = get(key);
+            if (val.empty()) return default_value;
+
+            if constexpr (std::is_same_v<U, bool>) {
+                // 1st attempt: parse as boolalpha ("true"/"false")
+                {
+                    istringstream_t iss1(val);
+                    bool res1;
+                    iss1 >> std::boolalpha >> res1;
+                    if (!iss1.fail()) return res1;
+                }
+                // 2nd attempt: parse as integer ("1"/"0")
+                {
+                    istringstream_t iss2(val);
+                    int res2;
+                    iss2 >> res2;
+                    if (!iss2.fail()) return res2;
+                }
+                return default_value;
+            } else {
+                istringstream_t iss(val);
+                U result;
+                iss >> result;
+                if (iss.fail()) return default_value;
+                return result;
+            }
 		}
 	};
 
