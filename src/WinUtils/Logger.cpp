@@ -156,7 +156,7 @@ void LoggerCore::DisableApartment(string_view_t apartment) {
 	m_enabledApartments.erase(string_t(apartment));
 }
 
-const Logger& LoggerCore::GetDefaultLogger() {
+Logger& LoggerCore::GetDefaultLogger() {
 	auto defaultLogger = GetLogger(DftLogger);
 	if (defaultLogger) {
 		return defaultLogger->get();

@@ -90,7 +90,7 @@ namespace WinUtils {
 		void DisableAllApartments() noexcept;
 		void EnableApartment(string_view_t apartment);
 		void DisableApartment(string_view_t apartment);
-		const Logger& GetDefaultLogger();
+		Logger& GetDefaultLogger();
 		const std::optional<std::reference_wrapper<Logger>> GetLogger(string_view_t apartment);
 
 	private:
