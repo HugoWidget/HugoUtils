@@ -30,6 +30,8 @@ namespace WinUtils {
 	class WUAPI Console
 	{
 	public:
+		Console();
+		bool check();
 		bool attach();
 		bool alloc();
 		bool require();

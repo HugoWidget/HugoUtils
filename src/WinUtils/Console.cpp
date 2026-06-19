@@ -27,6 +27,15 @@
 #include "WinUtils/Console.h"
 #include <conio.h>
 using namespace WinUtils;
+Console::Console()
+{
+	check();
+}
+bool Console::check()
+{
+	hasConsole = (bool)GetStdHandle(STD_INPUT_HANDLE);
+	return isUnderConsole();
+}
 bool Console::attach()
 {
 	if (GetStdHandle(STD_INPUT_HANDLE))return true;
