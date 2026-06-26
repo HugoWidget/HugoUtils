@@ -26,7 +26,7 @@
 #include <string_view>
 #include <iostream>
 
-// Common definitions and type aliases for WinUtils library
+ // Common definitions and type aliases for WinUtils library
 #ifdef _DEBUG 
 #define WU_DEBUG
 #endif
@@ -65,6 +65,12 @@ namespace WinUtils {
 	using ifstream_t = std::ifstream;
 	using ofstream_t = std::ofstream;
 	using istringstream_t = std::wistringstream;
+	template<typename... Args>
+	using format_string_t = std::format_string<Args...>;
+	template <typename... Args>
+	auto make_tformat_args(Args&&... args) {
+		return std::make_format_args(std::forward<Args>(args)...);
+	}
 	inline auto& tcout = std::cout;
 	inline auto& tcerr = std::cerr;
 	inline auto& tcin = std::cin;
@@ -82,6 +88,12 @@ namespace WinUtils {
 	using ifstream_t = std::wifstream;
 	using ofstream_t = std::wofstream;
 	using istringstream_t = std::wistringstream;
+	template<typename... Args>
+	using format_string_t = std::wformat_string<Args...>;
+	template <typename... Args>
+	auto make_tformat_args(Args&&... args) {
+		return std::make_wformat_args(std::forward<Args>(args)...);
+	}
 	inline auto& tcout = std::wcout;
 	inline auto& tcerr = std::wcerr;
 	inline auto& tcin = std::wcin;

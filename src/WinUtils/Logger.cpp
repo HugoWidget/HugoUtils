@@ -23,223 +23,258 @@
 #include "WinUtils/WinPch.h"
 
 #include <Windows.h>
+#include <chrono>
 #include <ctime>
 #include <fcntl.h>
 #include <fstream>
 #include <io.h>
 #include <iostream>
-#include <chrono>
+#include <sstream>
 
 #include "WinUtils/Logger.h"
 #include "WinUtils/StrConvert.h"
+
 using namespace WinUtils;
 using namespace std;
 
-string_t GetCurrentProcessDir2() {
-	char_t path[MAX_PATH] = { 0 };
-	TF(GetModuleFileName)(nullptr, path, _countof(path));
-	string_t str(path);
-	size_t pos = str.find_last_of(TS("\\/"));
-	return pos == wstring_view::npos ? TS("") : string_t(str.substr(0, pos + 1));
+static string_t GetCurrentProcessDir2() {
+    char_t path[MAX_PATH] = { 0 };
+    TF(GetModuleFileName)(nullptr, path, _countof(path));
+    string_t str(path);
+    size_t pos = str.find_last_of(TS("\\/"));
+    return (pos == string_t::npos) ? TS("") : string_t(str.substr(0, pos + 1));
 }
 
-FileLogStrategy::FileLogStrategy(string_view_t log_path)
-	: m_logPath(log_path) {
-}
-
-void FileLogStrategy::Output(LogLevel /*level*/,
-	const string_view_t formatted_log) noexcept {
-	std::lock_guard<std::mutex> lock(m_fileMutex);
-	string str = ConvertString<string>((string_t)formatted_log) + '\n';
-	FILE* f = 0;
-	try {
-#ifndef WU_NARROW_STRING
-		_wfopen_s(&f, m_logPath.c_str(), L"a");
+// --- LogFormatter ---
+string_t LogFormatter::GetFormattedTime() noexcept {
+    const auto now = std::time(nullptr);
+    std::tm local_tm;
+    localtime_s(&local_tm, &now);
+    char_t buf[64];
+#ifdef WU_NARROW_STRING
+    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &local_tm);
 #else
-		fopen_s(&f, m_logPath.c_str(), "a");
+    wcsftime(buf, sizeof(buf) / sizeof(wchar_t), L"%Y-%m-%d %H:%M:%S", &local_tm);
 #endif
-		if (!f)
-			return;
-		fwrite(str.c_str(), sizeof(char), str.length(), f);
-		fflush(f);
-		fclose(f);
-	}
-	catch (...) {
-		return;
-	}
+    return string_t(buf);
 }
 
-ConsoleLogStrategy::ConsoleLogStrategy() {
-	try {
-		m_isConsoleInitialized = true;
-	}
-	catch (...) {
-		m_isConsoleInitialized = false;
-	}
+const char_t* LogFormatter::LevelToString(LogLevel level) noexcept {
+    switch (level) {
+    case LogLevel::Info:  return TS("INFO");
+    case LogLevel::Warn:  return TS("WARN");
+    case LogLevel::Error: return TS("ERROR");
+    default:              return TS("DEBUG");
+    }
 }
 
-void ConsoleLogStrategy::Output(
-	LogLevel level, const string_view_t formatted_log) noexcept {
-	if (!m_isConsoleInitialized)
-		return;
-	try {
-		if (level == LogLevel::Error) {
-			tcerr << formatted_log << TS("\n");
-			tcerr.flush();
-		}
-		else {
-			tcout << formatted_log << TS("\n");
-			tcout.flush();
-		}
-	}
-	catch (...) {
-	}
+string_t LogFormatter::Format(LogLevel level, string_view_t msg) const {
+    stringstream_t ss;
+    if (HasFormat(LogFormat::Time))   ss << TS("[") << GetFormattedTime() << TS("]");
+    if (HasFormat(LogFormat::Level))  ss << TS("[") << LevelToString(level) << TS("]");
+    ss << msg.data();
+    return ss.str();
 }
 
-//               
-void DebugLogStrategy::Output(LogLevel /*level*/,
-	const string_view_t formatted_log) noexcept {
-	TF(OutputDebugString)((string_t(formatted_log) + TS("\n")).c_str());
+// --- FileLogStrategy ---
+FileLogStrategy::FileLogStrategy(string_view_t logPath, std::shared_ptr<LogFormatter> fmt)
+    : m_logPath(logPath),
+    m_formatter(fmt ? std::move(fmt) : std::make_shared<LogFormatter>()) {
 }
 
+void FileLogStrategy::Output(LogLevel level, const string_view_t msg) noexcept {
+    std::lock_guard<std::mutex> lock(m_fileMutex);
+    string_t formatted = m_formatter->Format(level, msg) + TS('\n');
+    string str = ConvertString<string>(formatted);
+    FILE* f = nullptr;
+    try {
+#ifdef WU_NARROW_STRING
+        fopen_s(&f, m_logPath.c_str(), "a");
+#else
+        _wfopen_s(&f, m_logPath.c_str(), L"a");
+#endif
+        if (!f) return;
+        fwrite(str.c_str(), sizeof(char), str.length(), f);
+        fflush(f);
+        fclose(f);
+    }
+    catch (...) {
+    }
+}
+
+// --- ConsoleLogStrategy ---
+ConsoleLogStrategy::ConsoleLogStrategy(std::shared_ptr<LogFormatter> fmt)
+    : m_formatter(fmt ? std::move(fmt) : std::make_shared<LogFormatter>()) {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut != nullptr && hOut != INVALID_HANDLE_VALUE) {
+        DWORD mode;
+        if (GetConsoleMode(hOut, &mode))
+            m_consoleAvailable = true;
+    }
+}
+
+void ConsoleLogStrategy::Output(LogLevel level, const string_view_t msg) noexcept {
+    if (!m_consoleAvailable) return;
+    try {
+        string_t formatted = m_formatter->Format(level, msg);
+        if (level == LogLevel::Error) {
+            tcerr << formatted << TS("\n");
+            tcerr.flush();
+        }
+        else {
+            tcout << formatted << TS("\n");
+            tcout.flush();
+        }
+    }
+    catch (...) {
+    }
+}
+
+// --- DebugLogStrategy ---
+DebugLogStrategy::DebugLogStrategy(std::shared_ptr<LogFormatter> fmt)
+    : m_formatter(fmt ? std::move(fmt) : std::make_shared<LogFormatter>()) {
+}
+
+void DebugLogStrategy::Output(LogLevel level, const string_view_t msg) noexcept {
+    TF(OutputDebugString)((m_formatter->Format(level, msg) + TS("\n")).c_str());
+}
+
+// --- Logger ---
 Logger::Logger(string_view_t apartment, LoggerInitProc proc)
-	: m_apartment(apartment) {
-	LoggerCore::Inst().AddLogger(*this);
-	proc(*this);
+    : m_apartment(apartment) {
+    LoggerCore::Inst().AddLogger(*this);
+    proc(*this);
 }
 
 Logger::~Logger() {
-	LoggerCore::Inst().DeleteLogger(m_apartment);
+    LoggerCore::Inst().DeleteLogger(m_apartment);
 }
 
-void Logger::AddFormat(LogFormat format) {
-	m_format.push_back(format);
+void Logger::Log(LogLevel level, string_view_t msg) const noexcept {
+    if (msg.empty()) return;
+    if (!LoggerCore::Inst().IsApartmentEnabled(m_apartment))
+        return;
+
+    LoggerCore::Inst().Log(level, msg);
 }
 
-void Logger::ClearFormat() { m_format.clear(); }
+// --- LoggerCore ---
+LoggerCore::LoggerCore()
+    : m_defaultFormatter(std::make_shared<LogFormatter>()),
+    m_allEnabled(false) {
+}
 
-bool Logger::HasFormat(LogFormat format) const {
-	return find(m_format.begin(), m_format.end(), format) != m_format.end();
+LoggerCore::~LoggerCore() = default;
+
+LoggerCore& LoggerCore::Inst() noexcept {
+    static LoggerCore instance;
+    return instance;
+}
+
+std::shared_ptr<LogFormatter> LoggerCore::GetDefaultFormatter() const {
+    std::lock_guard<std::mutex> lock(m_formatterMutex);
+    return m_defaultFormatter;
+}
+
+void LoggerCore::SetDefaultFormatter(std::shared_ptr<LogFormatter> fmt) {
+    std::lock_guard<std::mutex> lock(m_formatterMutex);
+    m_defaultFormatter = std::move(fmt);
+}
+
+void LoggerCore::AddFileStrategy(string_view_t path, std::shared_ptr<LogFormatter> fmt) {
+    AddStrategy<FileLogStrategy>(path, fmt);
+}
+
+void LoggerCore::AddConsoleStrategy(std::shared_ptr<LogFormatter> fmt) {
+    AddStrategy<ConsoleLogStrategy>(fmt);
+}
+
+void LoggerCore::AddDebugStrategy(std::shared_ptr<LogFormatter> fmt) {
+    AddStrategy<DebugLogStrategy>(fmt);
 }
 
 void LoggerCore::ClearStrategies() noexcept {
-	lock_guard<mutex> lock(m_loggerMutex);
-	m_strategies.clear();
+    std::lock_guard<std::mutex> lock(m_loggerMutex);
+    m_strategies.clear();
 }
 
-void LoggerCore::SetDefaultStrategies(string_view_t log_path) noexcept {
-	ClearStrategies();
-	string_t path = log_path.empty()
-		? (::GetCurrentProcessDir2() + TS("log.txt"))
-		: string_t(log_path);
-	AddStrategy<FileLogStrategy>(path);
-	AddStrategy<DebugLogStrategy>();
+void LoggerCore::SetDefaultStrategies(string_view_t logPath) noexcept {
+    ClearStrategies();
+    string_t path = logPath.empty()
+        ? (GetCurrentProcessDir2() + TS("log.txt"))
+        : string_t(logPath);
+    AddFileStrategy(path);
+    AddDebugStrategy();
 }
 
-void WinUtils::LoggerCore::EnableAllApartments() noexcept
-{
-	m_enabledApartments.clear();
+void LoggerCore::EnableAllApartments() noexcept {
+    std::lock_guard<std::mutex> lock(m_loggerMutex);
+    m_allEnabled = true;
+    m_except.clear();
 }
 
-void WinUtils::LoggerCore::DisableAllApartments() noexcept
-{
-	for (auto& logger : m_loggers) {
-		m_enabledApartments.insert(string_t(logger->GetApartment()));
-	}
+void LoggerCore::DisableAllApartments() noexcept {
+    std::lock_guard<std::mutex> lock(m_loggerMutex);
+    m_allEnabled = false;
+    m_except.clear();
 }
 
 void LoggerCore::EnableApartment(string_view_t apartment) {
-	m_enabledApartments.insert(string_t(apartment));
+    std::lock_guard<std::mutex> lock(m_loggerMutex);
+    if (m_allEnabled)
+        m_except.erase(string_t(apartment));
+    else
+        m_except.insert(string_t(apartment));
 }
 
 void LoggerCore::DisableApartment(string_view_t apartment) {
-	m_enabledApartments.erase(string_t(apartment));
+    std::lock_guard<std::mutex> lock(m_loggerMutex);
+    if (m_allEnabled)
+        m_except.insert(string_t(apartment));
+    else
+        m_except.erase(string_t(apartment));
+}
+
+bool LoggerCore::IsApartmentEnabled(string_view_t apartment) const {
+    if (m_allEnabled)
+        return m_except.find(string_t(apartment)) == m_except.end();
+    else
+        return m_except.find(string_t(apartment)) != m_except.end();
 }
 
 Logger& LoggerCore::GetDefaultLogger() {
-	auto defaultLogger = GetLogger(DftLogger);
-	if (defaultLogger) {
-		return defaultLogger->get();
-	}
-	else {
-		Logger* defaultLogger = new Logger(DftLogger);
-		m_loggers.insert(defaultLogger);
-		return *defaultLogger;
-	}
+    if (!m_defaultLogger)
+        m_defaultLogger = std::make_unique<Logger>(DftLogger);
+    return *m_defaultLogger;
 }
 
-const std::optional<std::reference_wrapper<Logger>> WinUtils::LoggerCore::GetLogger(string_view_t apartment)
-{
-	auto it = find_if(m_loggers.begin(), m_loggers.end(),
-		[&](const Logger* logger) {
-			return logger->GetApartment() == apartment;
-		});
-	if (it != m_loggers.end()) {
-		return **it;
-	}
-	return std::nullopt;
+std::optional<std::reference_wrapper<Logger>> LoggerCore::GetLogger(string_view_t apartment) {
+    auto it = std::find_if(m_loggers.begin(), m_loggers.end(),
+        [&](Logger* logger) {
+            return logger->GetApartment() == apartment;
+        });
+    if (it != m_loggers.end())
+        return **it;
+    return std::nullopt;
 }
 
 void LoggerCore::AddLogger(Logger& logger) {
-	m_loggers.insert(&logger);
+    m_loggers.insert(&logger);
 }
 
 void LoggerCore::DeleteLogger(string_view_t apartment) {
-	erase_if(m_loggers,
-		[&](Logger* logger) {
-			return logger->GetApartment() == apartment;
-		});
+    std::erase_if(m_loggers,
+        [&](Logger* logger) {
+            return logger->GetApartment() == apartment;
+        });
 }
 
-LoggerCore::LoggerCore() {}
+void LoggerCore::Log(LogLevel level, string_view_t msg) noexcept {
+    if (msg.empty() || level < m_globalLevel) return;
 
-LoggerCore::~LoggerCore() {}
-
-string_t Logger::GetFormattedTime() const noexcept {
-	const auto now_utc = std::chrono::system_clock::now();
-	const auto local_time = std::chrono::current_zone()->to_local(now_utc);
-	return std::format(TS("{:%Y-%m-%d %H:%M:%S}"), local_time);
-}
-
-void Logger::Log(LogLevel level,
-	string_view_t msg) const noexcept {
-	string_t formatted_msg = FormatLog(level, msg);
-	LoggerCore::Inst().Log(level, formatted_msg, m_apartment);
-}
-
-string_t Logger::FormatLog(LogLevel level,
-	string_view_t msg) const noexcept {
-	stringstream_t formattedLog;
-	const char_t* level_str = TS("DEBUG");
-	if (level == LogLevel::Info)
-		level_str = TS("INFO");
-	if (level == LogLevel::Warn)
-		level_str = TS("WARN");
-	if (level == LogLevel::Error)
-		level_str = TS("ERROR");
-	if (HasFormat(LogFormat::Time))
-		formattedLog << TS("[") << GetFormattedTime() << TS("]");
-	if (HasFormat(LogFormat::Level))
-		formattedLog << TS("[") << level_str << TS("]");
-	formattedLog << msg.data();
-
-	return formattedLog.str();
-}
-
-LoggerCore& ::LoggerCore::Inst() noexcept {
-	static LoggerCore instance;
-	return instance;
-}
-
-void LoggerCore::Log(LogLevel level, string_view_t msg, string_view_t apartment) noexcept {
-	if (msg.empty())
-		return;
-	if (apartment != TS("") && m_enabledApartments.find(string_t(apartment)) == m_enabledApartments.end())
-		return;
-	lock_guard<mutex> lock(m_loggerMutex);
-	for (const auto& strategy : m_strategies) {
-		if (strategy) {
-			strategy->Output(level, msg);
-		}
-	}
+    std::lock_guard<std::mutex> lock(m_loggerMutex);
+    for (const auto& strategy : m_strategies) {
+        if (strategy)
+            strategy->Output(level, msg);
+    }
 }
