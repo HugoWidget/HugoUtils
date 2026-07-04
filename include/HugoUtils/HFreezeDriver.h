@@ -39,7 +39,7 @@ struct DriverRuntimeStatus {
 struct DriverBootConfig {
     bool querySuccess = false;
     unsigned char buffer[1024] = { 0 };
-    int validLen = 0;
+    size_t validLen = 0;
 };
 
 // Driver query result structure
@@ -73,9 +73,9 @@ public:
 
     virtual std::wstring GetLastErrorMsg() const noexcept;
     virtual DWORD GetLastErrorCode() const noexcept;
-    static FreezeResult ParseFreezeBuffer(const unsigned char* buf, int len, QueryResult query);
+    static FreezeResult ParseFreezeBuffer(const unsigned char* buf, size_t len, QueryResult query);
     static FreezeResult ParseFreezeBuffer(QueryResult query);
-    static std::wstring HexDump(const unsigned char* data, int len)noexcept;
+    static std::wstring HexDump(const unsigned char* data, size_t len)noexcept;
     static std::wstring FormatFreezeStateResult(const FreezeResult& result);
     static std::wstring FormatFreezeStateResult(
         const FreezeResult& result,

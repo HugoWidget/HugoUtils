@@ -150,7 +150,7 @@ Logger::~Logger() {
     LoggerCore::Inst().DeleteLogger(m_apartment);
 }
 
-void Logger::Log(LogLevel level, string_view_t msg) const noexcept {
+void Logger::LogImpl(LogLevel level, string_view_t msg) const noexcept {
     if (msg.empty()) return;
     if (!LoggerCore::Inst().IsApartmentEnabled(m_apartment))
         return;

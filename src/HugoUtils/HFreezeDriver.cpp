@@ -119,7 +119,7 @@ inline FreezeResult HFreezeDriver::GetBootFreezeState() const noexcept {
     }
 
     const unsigned char* buf = query.bootConfig.buffer;
-    const int len = query.bootConfig.validLen;
+    const size_t len = query.bootConfig.validLen;
     if (!query.bootConfig.querySuccess || len < 0x90) {
         return FreezeResult(FrzOR::Failed, L"Boot config query failed or invalid length");
     }
@@ -276,7 +276,7 @@ std::string HFreezeDriver::GetCurrentConfig()const
     return res;
 }
 
-FreezeResult HFreezeDriver::ParseFreezeBuffer(const unsigned char* buf, int len, QueryResult query) {
+FreezeResult HFreezeDriver::ParseFreezeBuffer(const unsigned char* buf, size_t len, QueryResult query) {
     auto read_uint32 = [&](size_t offset) -> uint32_t {
         if (offset + 4 > static_cast<size_t>(len)) return 0;
         return static_cast<uint32_t>(buf[offset]) |
@@ -363,7 +363,7 @@ FreezeResult HFreezeDriver::ParseFreezeBuffer(QueryResult query)
     return ParseFreezeBuffer(query.bootConfig.buffer, query.bootConfig.validLen, query);
 }
 
-wstring HFreezeDriver::HexDump(const unsigned char* data, int len)noexcept {
+wstring HFreezeDriver::HexDump(const unsigned char* data, size_t len)noexcept {
     wstring content;
     content += L"    Offset | 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F\n";
     content += L"    -------+------------------------------------------------\n";
