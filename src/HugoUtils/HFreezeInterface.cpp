@@ -16,48 +16,67 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
-#include "HugoUtils/HugoUtilsDef.h"
-#ifndef HU_DISABLE_FREEZE
 #include "HugoUtils/HFreezeInterface.h"
-using namespace std;
-uint32_t CalculateVolumeMask(const wstring& driveLetters)noexcept {
+#ifndef HU_DISABLE_FREEZE
+
+FreezeResult::FreezeResult(FreezeOperationResult res,
+	const std::wstring& message,
+	const DWORD err,
+	const std::wstring& errorMessage,
+	const std::map<wchar_t, DiskInfo>& diskInfos,
+	const std::wstring& time,
+	const ProtectInfo& protectConfig)
+	: result(res), msg(message), error(err), errMsg(errorMessage),
+	diskInfos(diskInfos), operateTime(time), protectConfig(protectConfig), hasProtectConfig(true) {
+}
+
+FreezeResult& FreezeResult::setResult(FreezeOperationResult res) {
+	result = res;
+	return *this;
+}
+FreezeResult& FreezeResult::setMsg(const std::wstring& message) {
+	msg = message;
+	return *this;
+}
+FreezeResult& FreezeResult::setError(const DWORD err) {
+	error = err;
+	return *this;
+}
+FreezeResult& FreezeResult::setErrMsg(const std::wstring& errorMessage) {
+	errMsg = errorMessage;
+	return *this;
+}
+FreezeResult& FreezeResult::setDiskInfos(const std::map<wchar_t, DiskInfo>& infos) {
+	diskInfos = infos;
+	return *this;
+}
+FreezeResult& FreezeResult::setOperateTime(const std::wstring& time) {
+	operateTime = time;
+	return *this;
+}
+
+FreezeResult& FreezeResult::setProtectConfig(const ProtectInfo& config)
+{
+	protectConfig = config;
+	hasProtectConfig = true;
+	return *this;
+}
+
+uint32_t CalculateVolumeMask(const std::wstring& driveLetters) noexcept {
+	if (driveLetters.empty()) return 0;
 	uint32_t mask = 0;
-	for (wchar_t c : driveLetters) {
-		wchar_t upperC = static_cast<wchar_t>(toupper(static_cast<wint_t>(c)));
-		if (upperC < L'A' || upperC > L'Z')  return -1;
-		int offset = upperC - L'A';
-		if (offset >= 32)return -1;
-		mask |= (1 << offset);
+	for (wchar_t ch : driveLetters) {
+		if (ch >= L'A' && ch <= L'Z') {
+			mask |= (1u << (ch - L'A'));
+		}
+		else if (ch >= L'a' && ch <= L'z') {
+			mask |= (1u << (ch - L'a'));
+		}
+		else {
+			return static_cast<uint32_t>(-1);
+		}
 	}
 	return mask;
 }
 
-FreezeResult::FreezeResult(FreezeOperationResult res, const wstring& message, const DWORD err, const wstring& errorMessage, const map<wchar_t,DiskInfo> diskInfos, const wstring& time)
-	: result(res), msg(message), error(err), errMsg(errorMessage), diskInfos(diskInfos), operateTime(time) {
-}
-
-FreezeResult& FreezeResult::setResult(FreezeOperationResult res) {
-	this->result = res;
-	return *this;
-}
-FreezeResult& FreezeResult::setMsg(const wstring& message) {
-	this->msg = message;
-	return *this;
-}
-FreezeResult& FreezeResult::setError(const DWORD error){
-	this->error = error;
-	return *this;
-}
-FreezeResult& FreezeResult::setErrMsg(const wstring& errorMessage) {
-	this->errMsg = errorMessage;
-	return *this;
-}
-FreezeResult& FreezeResult::setDiskInfos(const map<wchar_t,DiskInfo>& diskInfos) {
-	this->diskInfos = diskInfos;
-	return *this;
-}
-FreezeResult& FreezeResult::setOperateTime(const wstring& time) {
-	this->operateTime = time;
-	return *this;
-}
 #endif // !HU_DISABLE_FREEZE

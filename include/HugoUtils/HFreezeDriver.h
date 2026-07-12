@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2025-2026 howdy213, JYardX
  *
  * This file is part of HugoUtils.
@@ -15,104 +15,54 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * HFreezeDriver – High‑level freeze management.
+ * Combines file configuration (HFreezeFilePrivate) and driver state (HFreezeDriverPrivate)
+ * to provide an easy‑to‑use interface.
  */
 #pragma once
 #include "HugoUtilsDef.h"
 #ifndef HU_DISABLE_FREEZE_DRIVER
 
-#include <Windows.h>
-#include<fstream>
-#include <cstdint>
-#include <string>
-#include<filesystem>
-#include "HugoUtils/HFreezeInterface.h"
+#include "HFreezeInterface.h"
+#include "HFreezeDriver_p.h"
+#include "HFreezeFile_p.h"
+#include <memory>
+#include <optional>
 
-// Driver runtime status structure
-struct DriverRuntimeStatus {
-    bool querySuccess = false;
-    uint32_t activeFlag = 0;
-    uint64_t ptr1 = 0;
-    std::wstring logStr;
-};
-
-// Driver boot configuration structure
-struct DriverBootConfig {
-    bool querySuccess = false;
-    unsigned char buffer[1024] = { 0 };
-    size_t validLen = 0;
-};
-
-// Driver query result structure
-struct QueryResult {
-    DriverRuntimeStatus runtimeStatus;
-    DriverBootConfig bootConfig;
-    bool driverOpenSuccess = false;
-    DWORD lastError = 0;
-};
-
-// SWFreeze Driver Management Class
-class HFreezeDriver :public IHugoFreeze {
+class HFreezeDriver : public IHugoFreeze {
 public:
-    static HFreezeDriver& Instance() noexcept;
+	HFreezeDriver() = default;
 
-    FreezeResult Init() noexcept;
-    void Cleanup() noexcept;
-    bool IsInitialized() const noexcept;
+	// IHugoFreeze implementation
+	FreezeResult Init() noexcept override;
+	void Cleanup() noexcept override;
+	bool IsInitialized() const noexcept override;
+	FreezeResult GetFreezeState() const noexcept override;
+	FreezeResult TryProtect(const std::wstring& driveLetters) const noexcept override;
+	FreezeResult SetFreezeState(const std::wstring& driveLetters) noexcept override;
+	std::wstring GetLastErrorMsg() const noexcept override { return L""; };
+	DWORD GetLastErrorCode() const noexcept override { return 0; };
+	// Comprehensive status snapshot (combines file, boot config, runtime data)
+	struct FullStatus {
+		std::map<wchar_t, DiskInfo> disks;
+		std::optional<ProtectInfo> fileConfig;
+		std::optional<ProtectInfo> bootConfig;
+		std::optional<FreezeBootSystem> bootSystem;
+		// Further runtime statistics can be added here as needed
+	};
+	FullStatus GetFullStatus() const;
 
-    // Configuration management
-    QueryResult QueryDriverStatus() const noexcept;
+	// Direct access to additional driver statistics (if driver is available)
+	std::optional<FreezePassThrough>      GetPassThrough() const;
+	std::optional<FreezeOldDriverQuality> GetOldDriverQuality() const;
+	std::optional<FreezeDiskFull>         GetDiskFull() const;
+	std::optional<FreezeBsodInfo>         GetBsodInfo() const;
+	std::optional<FreezeRedirectData>     GetRedirectData() const;
+	std::optional<FreezeProtectionState>  GetProtectionState() const;
+	std::optional<FreezeKeyResult>        GetKeyResult() const;
 
-    // Core functionalities
-    FreezeResult GetBootFreezeState() const noexcept;
-    FreezeResult GetFileFreezeState() const noexcept;
-    FreezeResult GetFreezeState() const noexcept;
-    FreezeResult TryProtect(const std::wstring& driveLetters) const noexcept;
-    FreezeResult SetFreezeState(
-        const std::wstring& driveLetters
-        ) noexcept;
-
-    virtual std::wstring GetLastErrorMsg() const noexcept;
-    virtual DWORD GetLastErrorCode() const noexcept;
-    static FreezeResult ParseFreezeBuffer(const unsigned char* buf, size_t len, QueryResult query);
-    static FreezeResult ParseFreezeBuffer(QueryResult query);
-    static std::wstring HexDump(const unsigned char* data, size_t len)noexcept;
-    static std::wstring FormatFreezeStateResult(const FreezeResult& result);
-    static std::wstring FormatFreezeStateResult(
-        const FreezeResult& result,
-        uint32_t activeFlag,
-        uint64_t ptr1,
-        const std::wstring& logStr
-        );
 private:
-    HANDLE m_hDriver = NULL;
-    HANDLE OpenDriver();
-    bool ModifyConfig(uint32_t newVol, bool enable) noexcept;
-    HFreezeDriver() = default;
-    ~HFreezeDriver() = default;
-    HFreezeDriver(const HFreezeDriver&) = delete;
-    HFreezeDriver(HFreezeDriver&&) = delete;
-    HFreezeDriver& operator=(const HFreezeDriver&) = delete;
-    HFreezeDriver& operator=(HFreezeDriver&&) = delete;
-    std::string GetCurrentConfig() const;
-private:
-    static constexpr uint32_t SWF_OFFSET_UINT32_NEXT_MASK = 0x10;
-    static constexpr uint8_t  SWF_OFFSET_UINT8_FLAG1 = 0x2D;
-    static constexpr uint16_t SWF_OFFSET_UINT16_STATUS = 0x31;
-    static constexpr uint8_t  SWF_OFFSET_UINT8_FLAG2 = 0x6D;
-    static constexpr uint32_t SWF_OFFSET_UINT32_VOL_MASK_COPY = 0x8C;
-
-    static constexpr DWORD IOCTL_QUERY_RUNTIME = 0x80002038;
-    static constexpr DWORD IOCTL_READ_MEM_CONF = 0x80002008;
-    static constexpr DWORD IOCTL_PREPARE_WRITE = 0x80002064;
-
-    static constexpr const wchar_t* DRIVER_DEVICE_PATH = L"\\\\.\\SWFreeze";
-    static constexpr const wchar_t* SWF_CONFIG_PATH = L"C:\\ProgramData\\SeewoFreezeKernelConfig\\VolumeInfo.config";
-    static constexpr size_t        CONFIG_SIZE = 1024;
-
-    static constexpr uint32_t OFF_RT_PTR1 = 0x04;
-    static constexpr uint32_t OFF_RT_LOG = 0x0C;
-    static constexpr uint32_t OFF_RT_ACTIVE = 0x114;
-    static constexpr uint32_t OFF_RT_STATS = 0x118;
-
+	mutable HFreezeDriverPrivate m_driver;   // driver communication
 };
 #endif // !HU_DISABLE_FREEZE_DRIVER
