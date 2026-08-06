@@ -45,3 +45,21 @@
 #define HU_DISABLE_FREEZE_DRIVER
 #endif
 
+#if defined(_M_IX86)
+#define HU_X86
+#elif defined(_M_X64) || defined(_WIN64)
+#define HU_X64
+#else
+#if defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 4
+#define HU_X86
+#elif defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 8
+#define HU_X64
+#else
+#define HU_X64
+#endif
+#endif
+
+#ifdef HU_X86
+#define HU_DISABLE_INSTALLER
+#define CPPHTTPLIB_HTTPLIB_H
+#endif

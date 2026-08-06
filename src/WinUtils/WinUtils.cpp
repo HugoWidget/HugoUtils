@@ -28,14 +28,11 @@
 #include <algorithm>
 #include <ranges>
 #include <filesystem>
+#include <lmcons.h>
 
 #include "WinUtils/WinUtils.h"
 #include "WinUtils/Logger.h"
 #include "WinUtils/StrConvert.h"
-#if WU_HASHLIB
-#include "WinUtils/hashlib/md5.h"
-#endif
-#include <lmcons.h>
 
 using namespace std;
 using namespace WinUtils;
@@ -532,7 +529,7 @@ namespace WinUtils {
 			fullPath = path;
 		}
 		else fullPath = effectiveBase / path;
-		
+
 		return fullPath.lexically_normal();
 	}
 
@@ -557,6 +554,35 @@ namespace WinUtils {
 		}
 		else error_msg = TS("Unknown error");
 		return error_msg;
+	}
+
+	// Disk Handling
+	WUAPI STORAGE_BUS_TYPE GetBusTypeForDrive(wchar_t driveLetter) {
+		wchar_t path[8] = L"\\\\.\\X:";
+		path[4] = driveLetter;
+		HANDLE hDevice = CreateFileW(path, GENERIC_READ,
+			FILE_SHARE_READ | FILE_SHARE_WRITE,
+			nullptr, OPEN_EXISTING, 0, nullptr);
+		if (hDevice == INVALID_HANDLE_VALUE) {
+			return BusTypeUnknown;
+		}
+
+		STORAGE_PROPERTY_QUERY query = {};
+		query.PropertyId = StorageDeviceProperty;
+		query.QueryType = PropertyStandardQuery;
+		BYTE buffer[sizeof(STORAGE_DEVICE_DESCRIPTOR) + 512] = { 0 };
+		DWORD bytesReturned = 0;
+		BOOL result = DeviceIoControl(hDevice, IOCTL_STORAGE_QUERY_PROPERTY,
+			&query, sizeof(query),
+			buffer, sizeof(buffer),
+			&bytesReturned, nullptr);
+		CloseHandle(hDevice);
+
+		if (!result || bytesReturned < sizeof(STORAGE_DEVICE_DESCRIPTOR)) {
+			return BusTypeUnknown;
+		}
+		STORAGE_DEVICE_DESCRIPTOR* desc = reinterpret_cast<STORAGE_DEVICE_DESCRIPTOR*>(buffer);
+		return desc->BusType;
 	}
 
 	HINSTANCE RunExternalProgram(string_t lpFile, string_t lpOperation, string_t lpParameters, string_t lpDirectory, int showCmd) {

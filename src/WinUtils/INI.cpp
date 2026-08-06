@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include "WinUtils/ini.h"
+#include "WinUtils/StrConvert.h"
 namespace WinUtils
 {
 	using namespace INIParser;
@@ -105,7 +106,7 @@ namespace WinUtils
 
 	class INIReader::INIReaderPrivate {
 	public:
-		ifstream_t fileReadStream;
+		std::ifstream fileReadStream;
 		T_LineDataPtr lineData;
 	};
 
@@ -145,7 +146,7 @@ namespace WinUtils
 		else {
 			isBOM = false;
 		}
-		string_t fileContents;
+		std::string fileContents;
 		const std::size_t contentSize = (isBOM ? fileSize - 3 : fileSize);
 		fileContents.resize(contentSize);
 		fileReadStream.seekg(isBOM ? 3 : 0, std::ios::beg);
@@ -156,14 +157,14 @@ namespace WinUtils
 		{
 			return output;
 		}
-		string_t buffer;
+		std::string buffer;
 		buffer.reserve(50);
 		for (std::size_t i = 0; i < contentSize; ++i)
 		{
 			const char_t& c = fileContents[i];
 			if (c == '\n')
 			{
-				output.emplace_back(buffer);
+				output.emplace_back(ConvertString(buffer));
 				buffer.clear();
 				continue;
 			}
@@ -172,7 +173,7 @@ namespace WinUtils
 				buffer += c;
 			}
 		}
-		output.emplace_back(buffer);
+		output.emplace_back(ConvertString(buffer));
 		return output;
 	}
 
@@ -219,7 +220,7 @@ namespace WinUtils
 
 	class INIGenerator::INIGeneratorPrivate {
 	public:
-		ofstream_t fileWriteStream;
+		std::ofstream fileWriteStream;
 	};
 	INIGenerator::INIGenerator(std::filesystem::path const& filename)
 		: pImpl(new INIGeneratorPrivate)
@@ -248,12 +249,12 @@ namespace WinUtils
 			auto const& section = it->first;
 			auto const& collection = it->second;
 			pImpl->fileWriteStream
-				<< TS("[")
-				<< section
-				<< TS("]");
+				<<"["
+				<< ConvertString<std::string>(section)
+				<< "]";
 			if (collection.size() != 0U)
 			{
-				pImpl->fileWriteStream << INIStringUtil::endl;
+				pImpl->fileWriteStream << ConvertString<std::string>(INIStringUtil::endl);
 				auto it2 = collection.begin();
 				for (;;)
 				{
@@ -262,24 +263,24 @@ namespace WinUtils
 					auto value = it2->second;
 					INIStringUtil::trim(value);
 					pImpl->fileWriteStream
-						<< key
-						<< ((prettyPrint) ? TS(" = ") : TS("="))
-						<< value;
+						<< ConvertString<std::string>(key)
+						<< ((prettyPrint) ? " = " : "=")
+						<< ConvertString<std::string>(value);
 					if (++it2 == collection.end())
 					{
 						break;
 					}
-					pImpl->fileWriteStream << INIStringUtil::endl;
+					pImpl->fileWriteStream << ConvertString<std::string>(INIStringUtil::endl);
 				}
 			}
 			if (++it == data.end())
 			{
 				break;
 			}
-			pImpl->fileWriteStream << INIStringUtil::endl;
+			pImpl->fileWriteStream << ConvertString<std::string>(INIStringUtil::endl);
 			if (prettyPrint)
 			{
-				pImpl->fileWriteStream << INIStringUtil::endl;
+				pImpl->fileWriteStream << ConvertString<std::string>(INIStringUtil::endl);
 			}
 		}
 		return true;
@@ -482,14 +483,14 @@ namespace WinUtils
 			return false;
 		}
 		T_LineData output = getLazyOutput(lineData, data, originalData);
-		ofstream_t fileWriteStream(pImpl->filename, std::ios::out | std::ios::binary);
+		std::ofstream fileWriteStream(pImpl->filename, std::ios::out | std::ios::binary);
 		if (fileWriteStream.is_open())
 		{
 			if (fileIsBOM) {
-				const char_t utf8_BOM[3] = {
-					static_cast<char_t>(0xEF),
-					static_cast<char_t>(0xBB),
-					static_cast<char_t>(0xBF)
+				const char utf8_BOM[3] = {
+					static_cast<char>(0xEF),
+					static_cast<char>(0xBB),
+					static_cast<char>(0xBF)
 				};
 				fileWriteStream.write(utf8_BOM, 3);
 			}
@@ -498,12 +499,12 @@ namespace WinUtils
 				auto line = output.begin();
 				for (;;)
 				{
-					fileWriteStream << *line;
+					fileWriteStream << ConvertString<std::string>(*line);
 					if (++line == output.end())
 					{
 						break;
 					}
-					fileWriteStream << INIStringUtil::endl;
+					fileWriteStream << ConvertString<std::string>(INIStringUtil::endl);
 				}
 			}
 			return true;

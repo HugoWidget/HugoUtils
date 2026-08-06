@@ -396,7 +396,7 @@ namespace WinUtils {
 	RegKey& RegKey::operator=(RegKey&& other) noexcept
 	{
 		// Prevent self-move-assign
-		if ((this != &other) && (m_hKey != other.m_hKey))
+		if (this != &other)
 		{
 			// Close current
 			Close();
