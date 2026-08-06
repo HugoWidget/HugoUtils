@@ -21,4 +21,7 @@
  *
  */
 #pragma once
-#include<WinSock2.h>
+#define UMDF_USING_NTSTATUS
+#include <winsock2.h>
+#include <windows.h>
+#include <ntstatus.h>
