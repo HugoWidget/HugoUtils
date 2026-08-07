@@ -25,6 +25,7 @@
 #include <sstream>
 #include <string_view>
 #include <iostream>
+#include <format>
 
  // Common definitions and type aliases for WinUtils library
 #ifdef _DEBUG 
@@ -106,8 +107,6 @@ namespace WinUtils {
 #endif
 #define TS(x) _TS(x)
 }
-
-
 
 namespace WinUtils {
 	class CmdParser;

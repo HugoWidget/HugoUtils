@@ -21,8 +21,10 @@
 
 #include "HugoUtils/HFreezeFile_p.h"
 #include "hashlib/md5.h"
+#include "WinUtils/StrConvert.h"
 #include <fstream>
-#include <algorithm>
+using namespace std;
+using namespace WinUtils;
 
  // Initialize the static path with the default value
 std::wstring HFreezeFilePrivate::s_configPath = HFreezeFilePrivate::DEFAULT_CONFIG_PATH;
@@ -42,7 +44,7 @@ std::optional<ProtectInfo> HFreezeFilePrivate::ReadConfig() {
 
 // ---- Read with explicit path ----
 std::optional<ProtectInfo> HFreezeFilePrivate::ReadConfig(const std::wstring& path) {
-	std::ifstream file(path, std::ios::binary);
+    std::ifstream file(ConvertString<string>(path), std::ios::binary);
 	if (!file) return std::nullopt;
 
 	uint8_t raw[CONFIG_SIZE];
@@ -59,7 +61,7 @@ bool HFreezeFilePrivate::WriteConfig(const ProtectInfo& config) {
 
 // ---- Write with explicit path ----
 bool HFreezeFilePrivate::WriteConfig(const ProtectInfo& config, const std::wstring& path) {
-	std::ofstream file(path, std::ios::binary);
+    std::ofstream file(ConvertString<string>(path), std::ios::binary);
 	if (!file) return false;
 
 	uint8_t raw[CONFIG_SIZE];
