@@ -86,8 +86,8 @@ namespace WinUtils {
 	using stringstream_t = std::wstringstream;
 	using string_view_t = std::wstring_view;
 	using char_t = wchar_t;
-	using ifstream_t = std::wifstream;
-	using ofstream_t = std::wofstream;
+	using ifstream_t = std::wifstream;// deprecated
+	using ofstream_t = std::wofstream;// deprecated
 	using istringstream_t = std::wistringstream;
 	template<typename... Args>
 	using format_string_t = std::wformat_string<Args...>;

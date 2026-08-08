@@ -99,6 +99,9 @@ namespace WinUtils {
 	// Error Handling
 	WUAPI string_t GetWindowsErrorMsg(DWORD error_code = GetLastError()) noexcept;
 
+	// Disk Handling
+	WUAPI STORAGE_BUS_TYPE GetBusTypeForDrive(wchar_t driveLetter);// Administrator privilege required.
+
 	// Program Execution & Monitoring
 	WUAPI HINSTANCE RunExternalProgram(string_t lpFile, string_t lpOperation = TS("open"), string_t lpParameters = TS(""), string_t lpDirectory = TS(""), int showCmd = SW_NORMAL);
 	WUAPI HINSTANCE RunExternalProgram(const LaunchItem& item);
