@@ -59,7 +59,9 @@
 #endif
 #endif
 
-#ifdef HU_X86
+// disable installer for x86 builds or when building HugoUtils itself as a dll,
+// to avoid linking issues with cpp-httplib
+#if defined(HU_X86) || defined(HUGOUTILS_EXPORTS)
 #define HU_DISABLE_INSTALLER
 #define CPPHTTPLIB_HTTPLIB_H
 #endif
