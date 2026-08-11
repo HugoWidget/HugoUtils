@@ -29,7 +29,11 @@ HugoUtils 是 Hugo 系列工具的核心库，采用 C++ 编写，提供了一�
 ## 构建
 
 1. 克隆仓库并更新子模块。
-2. 打开 `HugoUtils.sln`，选择 `Release x64/x86` 配置，选择`配置类型`（.dll/.lib）
+2. 打开 `HugoUtils.sln`，选择 `Release x64/x86` 配置，选择`配置类型`（`.dll`/`.lib`）
+
+   如果选择`.dll`，则需要添加`HUGOUTILS_EXPORTS`宏
+   
+   如果选择`.lib`，则需要添加`HUGOUTILS_NO_EXPORTS`宏（默认选项）
 3. 生成解决方案，输出 `HugoUtils.dll` 或对应的导入库 `HugoUtils.lib`。
 
 ## 使用示例（C 语言绑定）

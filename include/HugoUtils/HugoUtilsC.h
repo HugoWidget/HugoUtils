@@ -39,16 +39,22 @@
 #include <windows.h>
 #endif
 
-/* ---- DLL export / import macro ---- */
-#if defined(_WIN32)
-#  if defined(HUGOUTILS_EXPORTS)
-#    define HUGO_C_API __declspec(dllexport)
-#  else
-#    define HUGO_C_API __declspec(dllimport)
-#  endif
+// build as static library: define HUGOUTILS_NO_EXPORTS to disable DLL export/import
+#if defined(HUGOUTILS_NO_EXPORTS)
+#define HUGO_C_API
 #else
-#  define HUGO_C_API
+// build as DLL: define HUGOUTILS_EXPORTS when building the DLL, otherwise import
+#if defined(_WIN32)
+#if defined(HUGOUTILS_EXPORTS)
+#define HUGO_C_API __declspec(dllexport)
+#else
+#define HUGO_C_API __declspec(dllimport)
 #endif
+#else
+#define HUGO_C_API
+#endif // HUGOUTILS_EXPORTS
+
+#endif // HUGOUTILS_NO_EXPORT
 
 #ifdef __cplusplus
 extern "C" {
