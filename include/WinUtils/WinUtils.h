@@ -24,6 +24,7 @@
 #include "WinUtils/WinPch.h"
 
 #include <Windows.h>
+#include <winioctl.h>
 
 #include <tlhelp32.h>
 #include <vector>
