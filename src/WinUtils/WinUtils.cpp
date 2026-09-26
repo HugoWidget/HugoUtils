@@ -396,7 +396,7 @@ namespace WinUtils {
 		return false;
 	}
 
-	void EnsureSingleInstance(bool exclusive, string_t title, string_t name, string_t content, string_t extraInfo) {
+	HANDLE EnsureSingleInstance(bool exclusive, string_t title, string_t name, string_t content, string_t extraInfo) {
 		if (name.empty()) name = GetCurrentProcessName();
 		if (title.empty()) title = TS("Prompt - ") + name;
 		if (content.empty()) content = TS("The program is already running!\nClick OK to close the existing instance, click Cancel to exit this run.");
@@ -412,6 +412,7 @@ namespace WinUtils {
 			if (ret == IDOK) TerminateProcessesByName(name);
 			ExitProcess(0);
 		}
+		return hMutex;
 	}
 
 	// Command Line Handling
@@ -457,33 +458,50 @@ namespace WinUtils {
 	string_t GetCurrentUserName() {
 		char_t userName[UNLEN + 1] = {};
 		DWORD len = UNLEN;
-		TF(GetUserName)(userName, &len);
+		if (!TF(GetUserName)(userName, &len)) {
+			return TS("");
+		}
 		return userName;
 	}
 
 	string_t GetCurrentProcessPath() {
-		char_t path[MAX_PATH] = { 0 };
-		TF(GetModuleFileName)(nullptr, path, _countof(path));
+		char_t path[MAX_PATH] = {};
+		DWORD dwLen = TF(GetModuleFileName)(nullptr, path, _countof(path));
+		if (dwLen == 0)return TS("");
+		if (dwLen >= _countof(path)) return TS("");
 		return path;
 	}
 
 	string_t GetCurrentProcessDir() {
-		return GetDirFromPath(GetCurrentProcessPath());
+		const string_t exePath = GetCurrentProcessPath();
+		if (exePath.empty())return TS("");
+		return GetDirFromPath(exePath);
 	}
 
 	string_t GetCurrentProcessName() {
-		return GetFileNameFromPath(GetCurrentProcessPath());
+		const string_t exePath = GetCurrentProcessPath();
+		if (exePath.empty()) {
+			return TS("");
+		}
+		return GetFileNameFromPath(exePath);
 	}
 
 	string_t GetFileNameFromPath(string_view_t path) {
+		if (path.empty()) {
+			return TS("");
+		}
 		size_t pos = path.find_last_of(TS("\\/"));
-		return pos == wstring_view::npos ? string_t(path) : string_t(path.substr(pos + 1));
+		return pos == string_view_t::npos ? string_t(path) : string_t(path.substr(pos + 1));
 	}
 
 	string_t GetDirFromPath(string_view_t path) {
+		if (path.empty()) {
+			return TS("");
+		}
 		size_t pos = path.find_last_of(TS("\\/"));
-		return pos == wstring_view::npos ? TS("") : string_t(path.substr(0, pos + 1));
+		return pos == string_view_t::npos ? TS("") : string_t(path.substr(0, pos + 1));
 	}
+
 	bool IsBareFileName(const string_t& path) {
 		return (path.find_first_of(TS("\\/")) == string_t::npos) &&
 			(path.size() < 2 || path[1] != TS(':')); // not absolute path

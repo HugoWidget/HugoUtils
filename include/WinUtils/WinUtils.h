@@ -73,7 +73,7 @@ namespace WinUtils {
 	// Privilege & Instance Management
 	WUAPI bool IsCurrentProcessAdmin();
 	WUAPI bool RequireAdminPrivilege(bool exit = true);
-	WUAPI void EnsureSingleInstance(bool exclusive, string_t title = TS(""), string_t name = TS(""), string_t content = TS(""), string_t extraInfo = TS(""));
+	WUAPI HANDLE EnsureSingleInstance(bool exclusive, string_t title = TS(""), string_t name = TS(""), string_t content = TS(""), string_t extraInfo = TS(""));
 
 	// Command Line Handling
 	WUAPI string_t ExtractArguments(const string_t& cmdLine);

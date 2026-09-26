@@ -258,6 +258,8 @@
     <ClInclude Include="include\HugoUtils\HFreezeFile_p.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\WinUtils\UIAccess.h" />
+    <ClInclude Include="include\WinUtils\UIAccess.h">
+      <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

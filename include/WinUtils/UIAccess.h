@@ -21,7 +21,10 @@
  *
  */
 #pragma once
+#include "WinPch.h"
+
 #include <Windows.h>
+#include "WinUtilsDef.h"
 namespace WinUtils {
 	class UIAccess {
 	public:
@@ -31,11 +34,12 @@ namespace WinUtils {
 		// Create a primary token with the UIAccess flag (requires SeTcbPrivilege)
 		static DWORD CreateUIAccessToken(PHANDLE phToken);
 
-		// Check whether the current process token has UIAccess enabled
-		static BOOL CheckForUIAccess(DWORD* pdwErr, DWORD* pfUIAccess);
+		// Check whether the current process token has UIAccess enabled, and return the result in pfUIAccess (1 for true, 0 for false)
+		static BOOL HasUIAccess(DWORD* pdwErr, DWORD* pfUIAccess);
 
-		// If the current process does not have UIAccess, restart itself using a new token (process exits)
-		static DWORD PrepareForUIAccess();
+		// If the current process does not have UIAccess, restart itself using a new token
+		static DWORD RequireUIAccess(bool exit = true, WinUtils::string_t lpCmdLine = TF(GetCommandLine)());
+		static DWORD RequireUIAccessWithParams(bool exit = true, WinUtils::string_t params = TS(""));
 
 	private:
 		struct UniqueHandle {

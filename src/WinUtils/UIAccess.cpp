@@ -24,6 +24,16 @@
 #include <Tlhelp32.h>
 #include <string_view>
 #include <cstdlib>
+namespace {
+	WinUtils::string_t GetCurrentProcessPath2() {
+		WinUtils::char_t path[MAX_PATH] = {};
+		DWORD dwLen = TF(GetModuleFileName)(nullptr, path, _countof(path));
+		if (dwLen == 0)return TS("");
+		if (dwLen >= _countof(path)) return TS("");
+		return path;
+	}
+}
+
 namespace WinUtils {
 	UIAccess::UniqueHandle::UniqueHandle(HANDLE h) noexcept : handle_(h) {}
 
@@ -182,7 +192,7 @@ namespace WinUtils {
 		return dwErr;
 	}
 
-	BOOL UIAccess::CheckForUIAccess(DWORD* pdwErr, DWORD* pfUIAccess) {
+	BOOL WinUtils::UIAccess::HasUIAccess(DWORD* pdwErr, DWORD* pfUIAccess) {
 		if (!pdwErr || !pfUIAccess) {
 			return FALSE;
 		}
@@ -203,15 +213,16 @@ namespace WinUtils {
 		return TRUE;
 	}
 
-	DWORD UIAccess::PrepareForUIAccess() {
+	DWORD WinUtils::UIAccess::RequireUIAccess(bool exit, string_t cmdLine) {
+		if (cmdLine.empty())return ERROR_INVALID_PARAMETER;
 		DWORD dwErr = ERROR_SUCCESS;
-		BOOL fUIAccess = FALSE;
+		DWORD fUIAccess = FALSE;
 
-		if (!CheckForUIAccess(&dwErr, reinterpret_cast<DWORD*>(&fUIAccess))) {
+		if (!HasUIAccess(&dwErr, &fUIAccess)) {
 			return dwErr;
 		}
 
-		if (fUIAccess) {
+		if (fUIAccess != 0) {
 			return ERROR_SUCCESS;
 		}
 
@@ -226,10 +237,10 @@ namespace WinUtils {
 		::GetStartupInfoW(&si);
 
 		PROCESS_INFORMATION pi{};
-		BOOL bCreated = ::CreateProcessAsUserW(
+		BOOL bCreated = TF(CreateProcessAsUser)(
 			hTokenUIAccess.get(),
 			nullptr,
-			::GetCommandLineW(),
+			cmdLine.data(),
 			nullptr, nullptr,
 			FALSE,
 			0,
@@ -237,12 +248,12 @@ namespace WinUtils {
 			nullptr,
 			&si,
 			&pi
-		);
+			);
 
 		if (bCreated) {
 			::CloseHandle(pi.hProcess);
 			::CloseHandle(pi.hThread);
-			::ExitProcess(0);
+			if (exit)::ExitProcess(0);
 		}
 		else {
 			dwErr = ::GetLastError();
@@ -250,4 +261,26 @@ namespace WinUtils {
 
 		return dwErr;
 	}
+
+	DWORD WinUtils::UIAccess::RequireUIAccessWithParams(bool exit, string_t params)
+	{
+		const string_t path = GetCurrentProcessPath2();
+		if (path.empty()) {
+			return ERROR_FILE_NOT_FOUND;
+		}
+
+		string_t cmdLine;
+		cmdLine.reserve(path.size() + params.size() + 8);
+		cmdLine += L"\"";
+		cmdLine += path;
+		cmdLine += L"\"";
+
+		if (!params.empty()) {
+			cmdLine += L" ";
+			cmdLine += params;
+		}
+
+		return RequireUIAccess(exit, cmdLine);
+	}
+
 } // namespace WinUtils
