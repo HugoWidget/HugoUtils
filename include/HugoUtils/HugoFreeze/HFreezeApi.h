@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2025-2026 howdy213, JYardX
  *
  * This file is part of HugoUtils.
@@ -17,7 +17,7 @@
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "HugoUtilsDef.h"
+#include "HugoUtils/HugoUtilsDef.h"
 #ifndef HU_DISABLE_FREEZE_API
 
 
@@ -27,7 +27,7 @@
 
 #include "WinUtils/Logger.h"
 #include "WinUtils/HttpConnect.h"
-#include "HugoUtils/HFreezeInterface.h"
+#include "HugoUtils/HugoFreeze/HFreezeInterface.h"
 
 // Constant definitions
 constexpr wchar_t DEFAULT_IP[] = L"127.0.0.1";

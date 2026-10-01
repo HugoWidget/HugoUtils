@@ -23,6 +23,12 @@
     <Filter Include="源文件\hashlib">
       <UniqueIdentifier>{fa8ffe66-e43d-41db-84db-44092446dcac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\HugoFreeze">
+      <UniqueIdentifier>{62707e4b-8185-4146-9e83-94244c87a2af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\HugoFreeze">
+      <UniqueIdentifier>{7b6f2953-16b0-4f9c-a070-6e96758e6dda}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\HugoUtils\BruteforceModel.cpp">
@@ -32,15 +38,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\HugoUtils\HArt.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\HugoUtils\HFreezeApi.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\HugoUtils\HFreezeDriver_p.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\HugoUtils\HFreezeInterface.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\HugoUtils\HInfo.cpp">
@@ -121,17 +118,32 @@
     <ClCompile Include="src\HugoUtils\HLock.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\HugoUtils\HFreezeFile_p.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\HugoUtils\HFreezeDriver.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\HugoUtils\HugoString.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\WinUtils\UIAccess.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoFreeze\HFreezeApi.cpp">
+      <Filter>源文件\HugoFreeze</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoFreeze\HFreezeConfig.cpp">
+      <Filter>源文件\HugoFreeze</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoFreeze\HFreezeDriver.cpp">
+      <Filter>源文件\HugoFreeze</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoFreeze\HFreezeDriverBackend.cpp">
+      <Filter>源文件\HugoFreeze</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoFreeze\HFreezeDriverEx.cpp">
+      <Filter>源文件\HugoFreeze</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoFreeze\HFreezeFileBackend.cpp">
+      <Filter>源文件\HugoFreeze</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HugoUtils\HugoFreeze\HFreezeInterface.cpp">
+      <Filter>源文件\HugoFreeze</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -142,12 +154,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="include\HugoUtils\HArt.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="include\HugoUtils\HFreezeApi.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="include\HugoUtils\HFreezeDriver_p.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="include\HugoUtils\HInfo.h">
@@ -246,20 +252,32 @@
     <ClInclude Include="include\HugoUtils\HugoString.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\HugoUtils\HFreezeDriver.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="include\HugoUtils\SWFreezeTypes.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="include\HugoUtils\HFreezeInterface.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="include\HugoUtils\HFreezeFile_p.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="include\WinUtils\UIAccess.h">
       <Filter>头文件\WinUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreeze\HFreezeApi.h">
+      <Filter>头文件\HugoFreeze</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreeze\HFreezeConfig.h">
+      <Filter>头文件\HugoFreeze</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreeze\HFreezeDef.h">
+      <Filter>头文件\HugoFreeze</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreeze\HFreezeDriver.h">
+      <Filter>头文件\HugoFreeze</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreeze\HFreezeDriverBackend.h">
+      <Filter>头文件\HugoFreeze</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreeze\HFreezeDriverEx.h">
+      <Filter>头文件\HugoFreeze</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreeze\HFreezeFileBackend.h">
+      <Filter>头文件\HugoFreeze</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HugoUtils\HugoFreeze\HFreezeInterface.h">
+      <Filter>头文件\HugoFreeze</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

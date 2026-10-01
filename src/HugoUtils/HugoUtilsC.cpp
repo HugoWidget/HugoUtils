@@ -320,7 +320,7 @@ int Hugo_Mount_FindMountedDrive(HugoMount*, int, int, char*, int) { return 0; }
 /* ======================================================================== */
 
 #ifndef HU_DISABLE_FREEZE
-#include "HugoUtils/HFreezeInterface.h"
+#include "HugoUtils/HugoFreeze/HFreezeInterface.h"
 
 uint32_t Hugo_CalculateVolumeMask(const wchar_t* driveLetters) {
     if (!driveLetters) return 0;
@@ -335,7 +335,7 @@ uint32_t Hugo_CalculateVolumeMask(const wchar_t*) { return 0; }
 /* ======================================================================== */
 
 #ifndef HU_DISABLE_FREEZE_API
-#include "HugoUtils/HFreezeApi.h"
+#include "HugoUtils/HugoFreeze/HFreezeApi.h"
 
 struct HugoFreezeApi {
     HFreezeApi impl;
@@ -418,11 +418,11 @@ HugoResult Hugo_FreezeApi_SetFreezeState(HugoFreezeApi*, const wchar_t*, wchar_t
 /* ======================================================================== */
 
 #ifndef HU_DISABLE_FREEZE_DRIVER
-#include "HugoUtils/HFreezeDriver.h"
+#include "HugoUtils/HugoFreeze/HFreezeDriver.h"
 
 struct HugoFreezeDriver {
     HFreezeDriver impl;
-    FreezeResult lastState;
+    FreezeResult lastState{ FrzOR::Success };
 };
 
 HugoFreezeDriver* Hugo_FreezeDriver_Create(void) {
@@ -502,53 +502,69 @@ HugoResult Hugo_FreezeDriver_SetFreezeState(HugoFreezeDriver*, const wchar_t*, w
 /* ======================================================================== */
 
 #ifndef HU_DISABLE_FREEZE
-#include "HugoUtils/HFreezeFile_p.h"
+#include "HugoUtils/HugoFreeze/HFreezeDef.h"
+#include "HugoUtils/HugoFreeze/HFreezeFileBackend.h"
+#include "HugoUtils/HugoFreeze/HFreezeConfig.h"
+
+namespace {
+    // The C API exchanges raw 1024-byte blobs while HConfigFile can only be
+    // built by its friends, so wrap the caller's buffer through the published
+    // helper.
+#pragma warning(push)
+#pragma warning(disable : 4996)
+    HConfigFile WrapBlob(const uint8_t* data) {
+        return HConfigFile::fromBuffer(data);
+    }
+#pragma warning(pop)
+}
+
+static HFreezeFileBackend g_freezeFile;
 
 void Hugo_FreezeFile_SetConfigPath(const wchar_t* path) {
     if (!path) return;
-    HFreezeFilePrivate::SetConfigPath(std::wstring(path));
+    g_freezeFile.setConfigPath(std::wstring(path));
 }
 
 int Hugo_FreezeFile_GetConfigPath(wchar_t* buf, int bufSize) {
-    return WriteWStr(buf, bufSize, HFreezeFilePrivate::GetConfigPath());
+    return WriteWStr(buf, bufSize, g_freezeFile.getConfigPath());
 }
 
 int Hugo_FreezeFile_ReadConfig(uint8_t* outConfig, int configSize) {
-    if (!outConfig || configSize < static_cast<int>(sizeof(ProtectInfo))) return 0;
-    auto cfg = HFreezeFilePrivate::ReadConfig();
-    if (!cfg) return 0;
-    std::memcpy(outConfig, &(*cfg), sizeof(ProtectInfo));
+    if (!outConfig || configSize < static_cast<int>(FRZ_CONFIG_SIZE)) return 0;
+    HConfigFile cfg = WrapBlob(outConfig);
+    if (!g_freezeFile.getConfig(cfg)) return 0;
+    cfg.toBuffer(outConfig);
     return 1;
 }
 
 int Hugo_FreezeFile_ReadConfigFrom(const wchar_t* path, uint8_t* outConfig, int configSize) {
-    if (!path || !outConfig || configSize < static_cast<int>(sizeof(ProtectInfo))) return 0;
-    auto cfg = HFreezeFilePrivate::ReadConfig(std::wstring(path));
-    if (!cfg) return 0;
-    std::memcpy(outConfig, &(*cfg), sizeof(ProtectInfo));
-    return 1;
+    if (!path) return 0;
+    const std::wstring saved = g_freezeFile.getConfigPath();
+    g_freezeFile.setConfigPath(std::wstring(path));
+    const int ok = Hugo_FreezeFile_ReadConfig(outConfig, configSize);
+    g_freezeFile.setConfigPath(saved);
+    return ok;
 }
 
 int Hugo_FreezeFile_WriteConfig(const uint8_t* config, int configSize) {
-    if (!config || configSize < static_cast<int>(sizeof(ProtectInfo))) return 0;
-    ProtectInfo cfg;
-    std::memcpy(&cfg, config, sizeof(ProtectInfo));
-    return HFreezeFilePrivate::WriteConfig(cfg) ? 1 : 0;
+    if (!config || configSize < static_cast<int>(FRZ_CONFIG_SIZE)) return 0;
+    return g_freezeFile.setConfig(WrapBlob(config)) ? 1 : 0;
 }
 
 int Hugo_FreezeFile_WriteConfigTo(const uint8_t* config, int configSize, const wchar_t* path) {
-    if (!config || !path || configSize < static_cast<int>(sizeof(ProtectInfo))) return 0;
-    ProtectInfo cfg;
-    std::memcpy(&cfg, config, sizeof(ProtectInfo));
-    return HFreezeFilePrivate::WriteConfig(cfg, std::wstring(path)) ? 1 : 0;
+    if (!path) return 0;
+    const std::wstring saved = g_freezeFile.getConfigPath();
+    g_freezeFile.setConfigPath(std::wstring(path));
+    const int ok = Hugo_FreezeFile_WriteConfig(config, configSize);
+    g_freezeFile.setConfigPath(saved);
+    return ok;
 }
 
 int Hugo_FreezeFile_BuildFreezeConfig(const uint8_t* original, uint32_t targetVolMask, int enableFreeze, uint8_t* out) {
     if (!original || !out) return 0;
-    ProtectInfo orig;
-    std::memcpy(&orig, original, sizeof(ProtectInfo));
-    ProtectInfo result = HFreezeFilePrivate::BuildFreezeConfig(orig, targetVolMask, enableFreeze != 0);
-    std::memcpy(out, &result, sizeof(ProtectInfo));
+    HConfigFile built = HFreezeConfig::BuildFreezeConfig(
+        WrapBlob(original), targetVolMask, enableFreeze != 0);
+    built.toBuffer(out);
     return 1;
 }
 #else
@@ -566,10 +582,10 @@ int Hugo_FreezeFile_BuildFreezeConfig(const uint8_t*, uint32_t, int, uint8_t*) {
 /* ======================================================================== */
 
 #ifndef HU_DISABLE_FREEZE_DRIVER
-#include "HugoUtils/HFreezeDriver_p.h"
+#include "HugoUtils/HugoFreeze/HFreezeDriverEx.h"
 
 struct HugoFreezeDriverPrivate {
-    HFreezeDriverPrivate impl;
+    HFreezeDriverEx impl;
 };
 
 HugoFreezeDriverPrivate* Hugo_FreezeDrvPriv_Create(void) {
@@ -581,125 +597,114 @@ void Hugo_FreezeDrvPriv_Destroy(HugoFreezeDriverPrivate* h) {
 }
 
 int Hugo_FreezeDrvPriv_Init(HugoFreezeDriverPrivate* h) {
-    if (!h) return 0;
-    return h->impl.Init() ? 1 : 0;
+    return (h && h->impl.open()) ? 1 : 0;
 }
 
 void Hugo_FreezeDrvPriv_Cleanup(HugoFreezeDriverPrivate* h) {
-    if (!h) return;
-    h->impl.Cleanup();
+    if (h) h->impl.close();
 }
 
 int Hugo_FreezeDrvPriv_IsInitialized(HugoFreezeDriverPrivate* h) {
-    if (!h) return 0;
-    return h->impl.IsInitialized() ? 1 : 0;
+    return (h && h->impl.isOpen()) ? 1 : 0;
 }
 
 int Hugo_FreezeDrvPriv_QueryBootConfig(HugoFreezeDriverPrivate* h, uint8_t* outConfig, int configSize) {
-    if (!h || !outConfig || configSize < static_cast<int>(sizeof(ProtectInfo))) return 0;
-    auto cfg = h->impl.QueryBootConfig();
-    if (!cfg) return 0;
-    std::memcpy(outConfig, &(*cfg), sizeof(ProtectInfo));
-    return 1;
+    if (!h || !outConfig || configSize < static_cast<int>(FRZ_CONFIG_SIZE)) return 0;
+    return h->impl.getConfig(outConfig, static_cast<size_t>(configSize)) ? 1 : 0;
 }
 
 int Hugo_FreezeDrvPriv_WriteBootConfig(HugoFreezeDriverPrivate* h, const uint8_t* config, int configSize) {
-    if (!h || !config || configSize < static_cast<int>(sizeof(ProtectInfo))) return 0;
-    ProtectInfo cfg;
-    std::memcpy(&cfg, config, sizeof(ProtectInfo));
-    return h->impl.WriteBootConfig(cfg) ? 1 : 0;
+    if (!h || !config || configSize < static_cast<int>(FRZ_CONFIG_SIZE)) return 0;
+    return h->impl.setConfig(config, static_cast<size_t>(configSize)) ? 1 : 0;
 }
 
+/*
+ * Direct IOCTL entry points. Every query writes into the caller buffer only
+ * when the driver call succeeded, and the caller buffer has to be large enough
+ * to hold the documented structure (the driver itself is given an internal
+ * buffer of the size it requires).
+ */
 int Hugo_FreezeDrvPriv_QueryBootSystem(HugoFreezeDriverPrivate* h, void* outBuf, int bufSize) {
-    if (!h || !outBuf) return 0;
-    auto val = h->impl.QueryBootSystem();
-    if (!val) return 0;
-    if (bufSize < static_cast<int>(sizeof(*val))) return 0;
-    std::memcpy(outBuf, &(*val), sizeof(*val));
+    if (!h || !outBuf || bufSize < static_cast<int>(sizeof(FreezeEventBootSystem))) return 0;
+    FreezeEventBootSystem result{};
+    if (!h->impl.queryBootSystem(result)) return 0;
+    std::memcpy(outBuf, &result, sizeof(result));
     return 1;
 }
 
 int Hugo_FreezeDrvPriv_QueryKeyResult(HugoFreezeDriverPrivate* h, void* outBuf, int bufSize) {
-    if (!h || !outBuf) return 0;
-    auto val = h->impl.QueryKeyResult();
-    if (!val) return 0;
-    if (bufSize < static_cast<int>(sizeof(*val))) return 0;
-    std::memcpy(outBuf, &(*val), sizeof(*val));
+    if (!h || !outBuf || bufSize < static_cast<int>(sizeof(FreezeKeyResult))) return 0;
+    FreezeKeyResult result{};
+    if (!h->impl.queryKeyResult(result)) return 0;
+    std::memcpy(outBuf, &result, sizeof(result));
     return 1;
 }
 
 int Hugo_FreezeDrvPriv_QueryProtectionState(HugoFreezeDriverPrivate* h, void* outBuf, int bufSize) {
-    if (!h || !outBuf) return 0;
-    auto val = h->impl.QueryProtectionState();
-    if (!val) return 0;
-    if (bufSize < static_cast<int>(sizeof(*val))) return 0;
-    std::memcpy(outBuf, &(*val), sizeof(*val));
+    if (!h || !outBuf || bufSize < static_cast<int>(sizeof(FreezeProtectionState))) return 0;
+    FreezeProtectionState result{};
+    if (!h->impl.queryProtectionState(result)) return 0;
+    std::memcpy(outBuf, &result, sizeof(result));
     return 1;
 }
 
 int Hugo_FreezeDrvPriv_QueryPassThrough(HugoFreezeDriverPrivate* h, void* outBuf, int bufSize) {
-    if (!h || !outBuf) return 0;
-    auto val = h->impl.QueryPassThrough();
-    if (!val) return 0;
-    if (bufSize < static_cast<int>(sizeof(*val))) return 0;
-    std::memcpy(outBuf, &(*val), sizeof(*val));
+    if (!h || !outBuf || bufSize < static_cast<int>(sizeof(FreezeEventPassThrough))) return 0;
+    FreezeEventPassThrough result{};
+    if (!h->impl.queryPassThrough(result)) return 0;
+    std::memcpy(outBuf, &result, sizeof(result));
     return 1;
 }
 
 int Hugo_FreezeDrvPriv_QueryOldDriverQuality(HugoFreezeDriverPrivate* h, void* outBuf, int bufSize) {
-    if (!h || !outBuf) return 0;
-    auto val = h->impl.QueryOldDriverQuality();
-    if (!val) return 0;
-    if (bufSize < static_cast<int>(sizeof(*val))) return 0;
-    std::memcpy(outBuf, &(*val), sizeof(*val));
+    if (!h || !outBuf || bufSize < static_cast<int>(sizeof(FreezeEventOldDriverQuality))) return 0;
+    FreezeEventOldDriverQuality result{};
+    if (!h->impl.queryOldDriverQuality(result)) return 0;
+    std::memcpy(outBuf, &result, sizeof(result));
     return 1;
 }
 
 int Hugo_FreezeDrvPriv_QueryDiskFull(HugoFreezeDriverPrivate* h, void* outBuf, int bufSize) {
-    if (!h || !outBuf) return 0;
-    auto val = h->impl.QueryDiskFull();
-    if (!val) return 0;
-    if (bufSize < static_cast<int>(sizeof(*val))) return 0;
-    std::memcpy(outBuf, &(*val), sizeof(*val));
+    if (!h || !outBuf || bufSize < static_cast<int>(sizeof(FreezeEventDiskFull))) return 0;
+    FreezeEventDiskFull result{};
+    if (!h->impl.queryDiskFull(result)) return 0;
+    std::memcpy(outBuf, &result, sizeof(result));
     return 1;
 }
 
 int Hugo_FreezeDrvPriv_QueryBsodInfo(HugoFreezeDriverPrivate* h, void* outBuf, int bufSize) {
-    if (!h || !outBuf) return 0;
-    auto val = h->impl.QueryBsodInfo();
-    if (!val) return 0;
-    if (bufSize < static_cast<int>(sizeof(*val))) return 0;
-    std::memcpy(outBuf, &(*val), sizeof(*val));
+    if (!h || !outBuf || bufSize < static_cast<int>(sizeof(BsodInfo))) return 0;
+    BsodInfo result{};
+    if (!h->impl.queryBsodInfo(result)) return 0;
+    std::memcpy(outBuf, &result, sizeof(result));
     return 1;
 }
 
 int Hugo_FreezeDrvPriv_QueryRedirectData(HugoFreezeDriverPrivate* h, void* outBuf, int bufSize) {
-    if (!h || !outBuf) return 0;
-    auto val = h->impl.QueryRedirectData();
-    if (!val) return 0;
-    if (bufSize < static_cast<int>(sizeof(*val))) return 0;
-    std::memcpy(outBuf, &(*val), sizeof(*val));
+    if (!h || !outBuf || bufSize < static_cast<int>(sizeof(FreezeRedirectData))) return 0;
+    FreezeRedirectData result{};
+    if (!h->impl.queryRedirectData(result)) return 0;
+    std::memcpy(outBuf, &result, sizeof(result));
     return 1;
 }
 
 void Hugo_FreezeDrvPriv_TriggerBSOD(HugoFreezeDriverPrivate* h) {
-    if (!h) return;
-    h->impl.TriggerBSOD();
+    // A successful call bugchecks the machine; a failure stays retrievable
+    // through Hugo_FreezeDrvPriv_GetLastErrorCode/GetLastErrorMsg.
+    if (h) h->impl.triggerBsod();
 }
 
 void Hugo_FreezeDrvPriv_FlushWppLogs(HugoFreezeDriverPrivate* h) {
-    if (!h) return;
-    h->impl.FlushWppLogs();
+    if (h) h->impl.flushWppLogs();
 }
 
 DWORD Hugo_FreezeDrvPriv_GetLastErrorCode(HugoFreezeDriverPrivate* h) {
-    if (!h) return 0;
-    return h->impl.GetLastErrorCode();
+    return h ? h->impl.getLastError() : 0;
 }
 
 int Hugo_FreezeDrvPriv_GetLastErrorMsg(HugoFreezeDriverPrivate* h, wchar_t* buf, int bufSize) {
     if (!h) return 0;
-    return WriteWStr(buf, bufSize, h->impl.GetLastErrorMsg());
+    return WriteWStr(buf, bufSize, h->impl.getLastErrorMsg());
 }
 #else
 struct HugoFreezeDriverPrivate { int dummy; };

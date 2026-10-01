@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2025-2026 howdy213, JYardX
  *
  * This file is part of HugoUtils.
@@ -25,7 +25,7 @@
 #include <cwctype>
 #include <algorithm>
 
-#include "HugoUtils/HFreezeApi.h"
+#include "HugoUtils/HugoFreeze/HFreezeApi.h"
 #include "WinUtils/Logger.h"
 #include <WinUtils/StrConvert.h>
 #include "HugoUtils/HugoString.h"
