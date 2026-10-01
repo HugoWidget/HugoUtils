@@ -21,6 +21,7 @@
 
 #include <fstream>
 #include <format>
+#include <filesystem>
 
 #include "HugoUtils/HugoFreeze/HFreezeFileBackend.h"
 #include "WinUtils/Logger.h"
@@ -43,7 +44,8 @@ const std::wstring& HFreezeFileBackend::getConfigPath() const noexcept {
 }
 
 bool HFreezeFileBackend::getConfig(HConfigFile& out) const noexcept {
-    ifstream configFile(m_configPath, ios::binary | ios::in);
+    filesystem::path p(m_configPath);
+    ifstream configFile(p, ios::binary | ios::in);
     if (!configFile.is_open()) {
         DWORD err = GetLastError();
         logger.DLog(LogLevel::Error, format(L"Open config fail, err: {}", err));
