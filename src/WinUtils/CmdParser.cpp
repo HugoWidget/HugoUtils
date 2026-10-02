@@ -1,4 +1,4 @@
-﻿/*
+/*
  * The MIT License (MIT)
  * Copyright (c) 2026 howdy213
  *
@@ -147,7 +147,6 @@ namespace WinUtils {
 			tokens.push_back(std::move(current));
 		}
 
-		// 若引号未闭合，可根据策略抛异常或忽略；此处按原行为保持原样（由调用方 isQuotationMatched 提前拦截）
 		return tokens;
 	}
 
@@ -261,9 +260,9 @@ namespace WinUtils {
 				}
 			}
 			else {
-				// Non‑command token
+				// Non-command token
 				if (!hasSeenCommand) {
-					// Orphaned parameter → store under empty command
+					// Orphaned parameter -> store under empty command
 					m_commands[TS("")].push_back(removeQuotation(token));
 				}
 				else {

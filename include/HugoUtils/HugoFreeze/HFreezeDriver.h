@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2025-2026 howdy213, JYardX
  *
  * This file is part of HugoUtils.
@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with HugoUtils. If not, see <https://www.gnu.org/licenses/>.
  *
- * HFreezeDriver — high-level freeze management. Adapts HFreezeConfig to the
+ * HFreezeDriver - high-level freeze management. Adapts HFreezeConfig to the
  * IHugoFreeze interface. Both the default queries and the default state setter
  * go through the layered wrappers (HFreezeConfig -> backends -> HFreezeDriverEx).
  */
@@ -51,7 +51,7 @@ public:
     std::wstring GetLastErrorMsg() const noexcept override;
     DWORD GetLastErrorCode() const noexcept override;
 
-    // Extended queries — also routed through HFreezeConfig.
+    // Extended queries - also routed through HFreezeConfig.
     FreezeResult GetBootFreezeState() const noexcept;
     FreezeResult GetFileFreezeState() const noexcept;
     bool QueryDriverStatus(DriverRuntimeStatus& runtimeOut) const noexcept;

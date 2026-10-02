@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2025-2026 howdy213, JYardX
  *
  * This file is part of HugoUtils.
@@ -34,7 +34,7 @@
 #pragma pack(push, 8)
 
  // ===========================================================================
- // Global constants — VolumeInfo.config layout (1024 bytes)
+ // Global constants - VolumeInfo.config layout (1024 bytes)
  // ===========================================================================
 inline constexpr size_t FRZ_CONFIG_SIZE = 1024;      // 1 KB configuration blob
 inline constexpr size_t FRZ_CONFIG_MD5_SIZE = 16;    // MD5 digest prefix
@@ -119,7 +119,7 @@ inline constexpr int FRZ_MAX_DRIVE_LETTERS = 26;
 // 0. Protect Volume Configuration (1024 bytes, pack(1))
 // ===========================================================================
 #pragma pack(push, 1)
-// VolInfo configuration header — the payload that follows the 16-byte MD5
+// VolInfo configuration header - the payload that follows the 16-byte MD5
 // digest inside the 1024-byte configuration blob. All offsets in the comments
 // are relative to the whole blob (the MD5 occupies 0x00..0x0F).
 struct ProtectInfo {
@@ -157,7 +157,7 @@ static_assert(sizeof(ProtectInfo) == FRZ_CONFIG_INFO_END - FRZ_CONFIG_MD5_SIZE,
 #pragma pack(pop)
 
 // ===========================================================================
-// 1. HConfigFile — typed view over the 1024-byte configuration blob.
+// 1. HConfigFile - typed view over the 1024-byte configuration blob.
 //    Layout matches the on-disk / driver buffer exactly:
 //      [ md5 (16) ][ ProtectInfo ][ placeholder ... ] == 1024 bytes
 //    This is a pure data holder: it can only be created from an existing

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * The MIT License (MIT)
  * Copyright (c) 2026 howdy213
  *
@@ -35,7 +35,7 @@ using ParserData = std::map<WinUtils::string_t, std::vector<WinUtils::string_t>>
 namespace WinUtils {
 
     /**
-     * @brief A flexible command‑line parser that supports multiple prefixes,
+     * @brief A flexible command-line parser that supports multiple prefixes,
      *        quoted arguments, and the `--option=value` syntax.
      *
      * The parser recognises commands starting with:
@@ -50,7 +50,7 @@ namespace WinUtils {
      * The parser can operate in two modes:
      *   - Normal   : tokens that start with a prefix are commands, all others are parameters.
      *   - NoFlag   : the whole input is treated as a single command with no prefix.
-     *   - None     : auto‑detects based on the presence of any prefix character.
+     *   - None     : auto-detects based on the presence of any prefix character.
      *
      * Results are stored as a map from the normalized command name to a vector of parameters.
      * The anonymous command (used in NoFlag mode) is stored under the empty string key.
@@ -61,7 +61,7 @@ namespace WinUtils {
 
         /**
          * @brief Construct a parser.
-         * @param caseInsensitive If true, command names are matched case‑insensitively.
+         * @param caseInsensitive If true, command names are matched case-insensitively.
          */
         explicit CmdParser(bool caseInsensitive = false)
             : m_caseInsensitive(caseInsensitive) {
@@ -70,12 +70,12 @@ namespace WinUtils {
         /**
          * @brief Parse a command line.
          * @param commandLine The input string to parse.
-         * @param mode        Parsing mode (auto‑detect, normal, or no‑flag).
+         * @param mode        Parsing mode (auto-detect, normal, or no-flag).
          * @return true on success, false on syntax error (e.g. unmatched quotes).
          */
         [[nodiscard]] bool parse(string_view_t commandLine, ParseMode mode = ParseMode::Normal);
 
-        /// Returns the parsed data (read‑only).
+        /// Returns the parsed data (read-only).
         [[nodiscard]] const ParserData& result() const noexcept { return m_commands; }
 
         /// Returns the parsed data (modifiable).
@@ -113,8 +113,8 @@ namespace WinUtils {
         [[nodiscard]] static size_t getPrefixLength(string_view_t token) noexcept;
 
         // ----- Data members -----
-        ParserData m_commands;            // Parsed results: command → parameters
-        bool m_caseInsensitive = false;   // Flag for case‑insensitive matching
+        ParserData m_commands;            // Parsed results: command -> parameters
+        bool m_caseInsensitive = false;   // Flag for case-insensitive matching
         bool m_parseSuccess = false;      // Indicates if the last parse succeeded
     };
 

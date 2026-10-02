@@ -1,4 +1,4 @@
-﻿/*
+/*
  * The MIT License (MIT)
  * Copyright (c) 2026 howdy213
  *
@@ -46,7 +46,7 @@ namespace {
 		HINSTANCE            hInstance;
 		std::vector<string_t> targetProcesses;
 		int                  checkInterval;
-		HANDLE               hStopEvent;   // manual‑reset event for stopping
+		HANDLE               hStopEvent;   // manual-reset event for stopping
 	};
 
 	struct MonitorThreadParam {
@@ -309,7 +309,7 @@ namespace WinUtils {
 		BITMAPINFOHEADER bmi{};
 		bmi.biSize = sizeof(BITMAPINFOHEADER);
 		bmi.biWidth = width;
-		bmi.biHeight = -height;          // 从上到下
+		bmi.biHeight = -height;          // Top-down (from top to bottom)
 		bmi.biPlanes = 1;
 		bmi.biBitCount = 32;
 		bmi.biCompression = BI_RGB;
@@ -327,7 +327,7 @@ namespace WinUtils {
 
 		if (!got) return false;
 
-		// 手写 BMP 头
+		// Manually construct BMP header
 		const int32_t pixelOffset = 14 + 40;
 		const int32_t fileSize = pixelOffset + imageSize;
 
@@ -778,7 +778,7 @@ namespace WinUtils {
 		CloseHandle(hMonitorThread);
 		CloseHandle(hExitEvent);
 
-		// Destroy window (do NOT unregister class — shared)
+		// Destroy window (do NOT unregister class  shared)
 		DestroyWindow(hwnd);
 
 		delete param;

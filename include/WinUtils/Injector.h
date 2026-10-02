@@ -37,34 +37,36 @@
 class WinUtils::Injector
 {
 public:
-	// 获取所有指定名称进程的PID列表
+	// Get the PID list of all processes with the specified name
 	static std::vector<DWORD> GetProcessPIDs(const string_t& processName);
 
-	// 检查指定PID的进程是否存活
+	// Check whether the process with the specified PID is alive
 	static bool CheckPIDAlive(DWORD pid);
 
-	// 传统远程线程注入DLL
+	// Traditional remote thread DLL injection
 	static bool InjectDLL(DWORD pid, const string_t& dllPath);
 
-	// APC注入
+	// APC injection
 	BOOL InjectDllViaAPC(DWORD pid, const string_t& dllPath);
 
-	// 特殊APC注入
+	// Special APC injection
 	static bool InjectDLLViaAPC2(DWORD pid, const string_t& dllPath);
 
-	// 监控指定进程并自动注入DLL
+	// Monitor the specified process and automatically inject the DLL
 	static void MonitorAndInject(const string_t& dllPath, const string_t& processName, DWORD checkInterval = 2000);
 
-	// 获取指定PID的所有模块
+	// Get all modules of the specified PID
 	static std::vector<std::pair<HMODULE, string_t>> GetProcessModules(DWORD pid);
 
-	// 从指定PID的进程中卸载指定DLL
+	// Unload the specified DLL from the process with the specified PID
 	static bool UninjectDLL(DWORD pid, const string_t& dllPath);
 
-	// 从所有匹配进程名的进程中卸载指定DLL，返回卸载成功的PID列表
+	// Unload the specified DLL from all processes matching the process name,
+	// returning the list of PIDs from which unloading succeeded
 	static std::vector<DWORD> UninjectFromAllProcesses(const string_t& processName, const string_t& dllPath, const std::vector<DWORD>& excludeProcess = {});
 
-	// 注入DLL到所有进程，返回注入成功的PID列表
+	// Inject the DLL into all processes,
+	// returning the list of PIDs where injection succeeded
 	static std::vector<DWORD> InjectToAllProcesses(const string_t& processName, const string_t& dllPath, const std::vector<DWORD>& excludeProcess = {});
 
 private:

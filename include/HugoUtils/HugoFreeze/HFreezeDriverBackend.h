@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2025-2026 howdy213, JYardX
  *
  * This file is part of HugoUtils.
@@ -26,7 +26,7 @@
 #include "HugoUtils/HugoFreeze/HFreezeDriverEx.h"
 
  // ---------------------------------------------------------------------------
- // HFreezeDriverBackend — freeze-driver operation wrapper built on top of
+ // HFreezeDriverBackend - freeze-driver operation wrapper built on top of
  // HFreezeDriverEx. Exchanges HConfigFile instead of raw buffers.
  // ---------------------------------------------------------------------------
 class HFreezeDriverBackend {

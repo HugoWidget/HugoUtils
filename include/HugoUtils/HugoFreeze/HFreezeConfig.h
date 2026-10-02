@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2025-2026 howdy213, JYardX
  *
  * This file is part of HugoUtils.
@@ -34,7 +34,7 @@ enum class HFreezeConfigSource : uint8_t {
 };
 
 // ---------------------------------------------------------------------------
-// HFreezeConfig — unified configuration access. Wraps HFreezeFileBackend and
+// HFreezeConfig - unified configuration access. Wraps HFreezeFileBackend and
 // HFreezeDriverBackend and exposes a single get/set surface parameterised by
 // HConfigFile. It also owns the freeze-mask build/apply logic.
 // ---------------------------------------------------------------------------

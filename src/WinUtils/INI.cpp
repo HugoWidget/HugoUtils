@@ -161,7 +161,7 @@ namespace WinUtils
 		buffer.reserve(50);
 		for (std::size_t i = 0; i < contentSize; ++i)
 		{
-			const char_t& c = fileContents[i];
+			const char& c = fileContents[i];
 			if (c == '\n')
 			{
 				output.emplace_back(ConvertString(buffer));

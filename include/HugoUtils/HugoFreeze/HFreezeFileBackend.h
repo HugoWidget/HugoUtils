@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2025-2026 howdy213, JYardX
  *
  * This file is part of HugoUtils.
@@ -25,7 +25,7 @@
 #include "HugoUtils/HugoFreeze/HFreezeDef.h"
 
  // ---------------------------------------------------------------------------
- // HFreezeFileBackend — pure VolumeInfo.config file I/O.
+ // HFreezeFileBackend - pure VolumeInfo.config file I/O.
  // Reads/writes the same 1024-byte blob as the driver, using HConfigFile.
  // ---------------------------------------------------------------------------
 class HFreezeFileBackend {

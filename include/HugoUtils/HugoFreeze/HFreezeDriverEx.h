@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2025-2026 howdy213, JYardX
  *
  * This file is part of HugoUtils.
@@ -28,7 +28,7 @@
 #include "HugoUtils/HugoFreeze/HFreezeDef.h"
 
  // ---------------------------------------------------------------------------
- // HDriverHandle — reference-counted owner of the SWFreeze device handle.
+ // HDriverHandle - reference-counted owner of the SWFreeze device handle.
  // The device is opened on the first open() and closed only when the last
  // owner releases it (refCount drops to 0). There is a single process-wide
  // instance, shared by every owner.
@@ -58,7 +58,7 @@ private:
 };
 
 // ---------------------------------------------------------------------------
-// HFreezeDriverEx — low-level, C-style wrapper over the SWFreeze driver.
+// HFreezeDriverEx - low-level, C-style wrapper over the SWFreeze driver.
 // Every IOCTL the driver exposes is wrapped by a strongly typed method; the
 // generic deviceControl() is the shared core they all use.
 // ---------------------------------------------------------------------------
