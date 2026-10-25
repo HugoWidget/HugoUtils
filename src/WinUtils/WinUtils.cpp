@@ -778,7 +778,7 @@ namespace WinUtils {
 		CloseHandle(hMonitorThread);
 		CloseHandle(hExitEvent);
 
-		// Destroy window (do NOT unregister class  shared)
+		// Destroy window (do NOT unregister class - shared)
 		DestroyWindow(hwnd);
 
 		delete param;
