@@ -23,7 +23,11 @@
 #pragma once
 
 #include <algorithm>
+#include <atomic>
+#include <cstdint>
+#include <cstdio>
 #include <format>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -31,41 +35,63 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "WinUtilsDef.h"
 
 namespace WinUtils {
 
+	class Logger;
 	using LoggerInitProc = void(class Logger& logger);
 	inline const char_t* DftLogger = TS("Default");
 
 	enum class LogLevel : uint8_t { Debug = 0, Info = 1, Warn = 2, Error = 3 };
 	enum class LogFormat { Time = 0, Level = 1 };
 
+	// Threshold sentinel: value 4 means "logging disabled for this apartment".
+	inline constexpr uint8_t kLogDisabledThreshold = 4;
+
 	// ===========================================================================
 	// LogFormatter
 	// ===========================================================================
 	class LogFormatter {
 	public:
-		explicit LogFormatter(std::vector<LogFormat> formats = {
+		using FormatVec = std::vector<LogFormat>;
+
+		explicit LogFormatter(FormatVec formats = {
 			LogFormat::Time, LogFormat::Level })
-			: m_formats(std::move(formats)) {
+			: m_formats(std::make_shared<const FormatVec>(std::move(formats))) {
 		}
 
-		void AddFormat(LogFormat f) { m_formats.push_back(f); }
-		void ClearFormats() { m_formats.clear(); }
-		bool HasFormat(LogFormat f) const {
-			return std::find(m_formats.begin(), m_formats.end(), f) != m_formats.end();
+		// Copy-on-write: readers keep lock-free access to a stable snapshot.
+		void AddFormat(LogFormat f) {
+			auto next = std::make_shared<FormatVec>();
+			if (auto old = m_formats.load(std::memory_order_acquire))
+				*next = *old;
+			next->push_back(f);
+			m_formats.store(std::move(next), std::memory_order_release);
+		}
+		void ClearFormats() noexcept {
+			m_formats.store(std::make_shared<const FormatVec>(), std::memory_order_release);
+		}
+		bool HasFormat(LogFormat f) const noexcept {
+			auto formats = m_formats.load(std::memory_order_acquire);
+			return formats &&
+				std::find(formats->begin(), formats->end(), f) != formats->end();
 		}
 
 		string_t Format(LogLevel level, string_view_t msg) const;
+		// Append-only variant: reuses caller-provided buffer to avoid extra allocation.
+		void FormatTo(string_t& out, LogLevel level, string_view_t msg) const;
 
 	private:
-		static string_t GetFormattedTime() noexcept;
+		// Thread-local second-level cache: at most one strftime per second per thread.
+		static const string_t& GetFormattedTime() noexcept;
 		static const char_t* LevelToString(LogLevel level) noexcept;
 
-		std::vector<LogFormat> m_formats;
+		std::atomic<std::shared_ptr<const FormatVec>> m_formats;
 	};
 
 	// ===========================================================================
@@ -73,12 +99,24 @@ namespace WinUtils {
 	// ===========================================================================
 	class LogOutputStrategy {
 	public:
+		explicit LogOutputStrategy(std::shared_ptr<LogFormatter> fmt = nullptr);
 		virtual ~LogOutputStrategy() = default;
 
-		virtual std::shared_ptr<LogFormatter> GetFormatter() const = 0;
-		virtual void SetFormatter(std::shared_ptr<LogFormatter> fmt) = 0;
+		LogOutputStrategy(const LogOutputStrategy&) = delete;
+		LogOutputStrategy& operator=(const LogOutputStrategy&) = delete;
+
+		// Hot path: single atomic acquire load, no lock.
+		std::shared_ptr<LogFormatter> GetFormatter() const noexcept {
+			return m_formatter.load(std::memory_order_acquire);
+		}
+		void SetFormatter(std::shared_ptr<LogFormatter> fmt) noexcept {
+			m_formatter.store(std::move(fmt), std::memory_order_release);
+		}
 
 		virtual void Output(LogLevel level, string_view_t msg) noexcept = 0;
+
+	protected:
+		std::atomic<std::shared_ptr<LogFormatter>> m_formatter;
 	};
 
 	// ===========================================================================
@@ -88,15 +126,17 @@ namespace WinUtils {
 	public:
 		explicit FileLogStrategy(string_view_t logPath,
 			std::shared_ptr<LogFormatter> fmt = nullptr);
+		~FileLogStrategy() override;
+
 		void Output(LogLevel level, string_view_t msg) noexcept override;
 
-		std::shared_ptr<LogFormatter> GetFormatter() const override { return m_formatter; }
-		void SetFormatter(std::shared_ptr<LogFormatter> fmt) override { m_formatter = std::move(fmt); }
-
 	private:
+		// Caller must hold m_fileMutex.
+		void OpenLocked() noexcept;
+
 		string_t m_logPath;
 		std::mutex m_fileMutex;
-		std::shared_ptr<LogFormatter> m_formatter;
+		FILE* m_file = nullptr;
 	};
 
 	// ===========================================================================
@@ -107,12 +147,12 @@ namespace WinUtils {
 		explicit ConsoleLogStrategy(std::shared_ptr<LogFormatter> fmt = nullptr);
 		void Output(LogLevel level, string_view_t msg) noexcept override;
 
-		std::shared_ptr<LogFormatter> GetFormatter() const override { return m_formatter; }
-		void SetFormatter(std::shared_ptr<LogFormatter> fmt) override { m_formatter = std::move(fmt); }
-
 	private:
-		bool m_consoleAvailable = false;
-		std::shared_ptr<LogFormatter> m_formatter;
+		// Re-checked on demand so a console attached after construction still works.
+		bool EnsureConsole() noexcept;
+
+		std::atomic<bool> m_consoleAvailable{ false };
+		std::mutex m_consoleMutex;
 	};
 
 	// ===========================================================================
@@ -122,12 +162,6 @@ namespace WinUtils {
 	public:
 		explicit DebugLogStrategy(std::shared_ptr<LogFormatter> fmt = nullptr);
 		void Output(LogLevel level, string_view_t msg) noexcept override;
-
-		std::shared_ptr<LogFormatter> GetFormatter() const override { return m_formatter; }
-		void SetFormatter(std::shared_ptr<LogFormatter> fmt) override { m_formatter = std::move(fmt); }
-
-	private:
-		std::shared_ptr<LogFormatter> m_formatter;
 	};
 
 	// ===========================================================================
@@ -136,25 +170,37 @@ namespace WinUtils {
 	class LoggerCore {
 	public:
 		static LoggerCore& Inst() noexcept;
+
 		LoggerCore(const LoggerCore&) = delete;
 		LoggerCore(LoggerCore&&) = delete;
 		LoggerCore& operator=(const LoggerCore&) = delete;
 		LoggerCore& operator=(LoggerCore&&) = delete;
 
-		void Log(LogLevel level, string_view_t msg) noexcept;
+		// ---- Global level / apartment configuration (low-frequency, locked) ----
+		void SetGlobalLevel(LogLevel level) noexcept;
+		LogLevel GetGlobalLevel() const noexcept;
 
-		void SetGlobalLevel(LogLevel level) noexcept { m_globalLevel = level; }
-		LogLevel GetGlobalLevel() const noexcept { return m_globalLevel; }
+		void EnableAllApartments() noexcept;
+		void DisableAllApartments() noexcept;
+		void EnableApartment(string_view_t apartment);
+		void DisableApartment(string_view_t apartment);
+		bool IsApartmentEnabled(string_view_t apartment) const;
 
+		// ---- Strategies (written rarely; dispatch path is lock-free) ----
 		template <class Strategy, class... Args>
-		void AddStrategy(Args&&... args) noexcept {
+		void AddStrategy(Args&&... args) {
 			static_assert(std::is_base_of_v<LogOutputStrategy, Strategy>,
 				"Strategy must inherit from LogOutputStrategy!");
-			auto strategy = std::make_unique<Strategy>(std::forward<Args>(args)...);
+			auto strategy = std::make_shared<Strategy>(std::forward<Args>(args)...);
 			if (!strategy->GetFormatter())
 				strategy->SetFormatter(GetDefaultFormatter());
-			std::lock_guard<std::mutex> lock(m_loggerMutex);
-			m_strategies.insert(std::move(strategy));
+
+			std::lock_guard<std::mutex> lock(m_strategiesWriteMutex);
+			auto old = m_strategies.load(std::memory_order_acquire);
+			auto next = old ? std::make_shared<StrategyVec>(*old)
+				: std::make_shared<StrategyVec>();
+			next->push_back(std::move(strategy));
+			m_strategies.store(std::move(next), std::memory_order_release);
 		}
 
 		void AddFileStrategy(string_view_t path, std::shared_ptr<LogFormatter> fmt = nullptr);
@@ -163,37 +209,54 @@ namespace WinUtils {
 		void ClearStrategies() noexcept;
 		void SetDefaultStrategies(string_view_t logPath = TS("")) noexcept;
 
+		// ---- Formatter ----
 		std::shared_ptr<LogFormatter> GetDefaultFormatter() const;
+		// A null formatter is ignored so log output never silently disappears.
 		void SetDefaultFormatter(std::shared_ptr<LogFormatter> fmt);
 
-		void EnableAllApartments() noexcept;
-		void DisableAllApartments() noexcept;
-		void EnableApartment(string_view_t apartment);
-		void DisableApartment(string_view_t apartment);
-		bool IsApartmentEnabled(string_view_t apartment) const;
-
+		// ---- Logger lookup ----
 		Logger& GetDefaultLogger();
+		// WARNING: the returned logger is owned by the caller. The reference
+		// becomes dangling if that Logger is destroyed concurrently.
 		std::optional<std::reference_wrapper<Logger>> GetLogger(string_view_t apartment);
+
+		// ---- Hot-path dispatch (lock-free) ----
+		void Dispatch(LogLevel level, string_view_t msg) noexcept {
+			auto strategies = m_strategies.load(std::memory_order_acquire);
+			if (!strategies) return;
+			for (const auto& s : *strategies) {
+				if (s) s->Output(level, msg);
+			}
+		}
 
 	private:
 		friend class Logger;
-		void AddLogger(Logger& logger);
-		void DeleteLogger(string_view_t apartment);
+		using StrategyVec = std::vector<std::shared_ptr<LogOutputStrategy>>;
 
 		LoggerCore();
 		~LoggerCore();
 
-		std::set<std::unique_ptr<LogOutputStrategy>> m_strategies;
-		std::mutex m_loggerMutex;
-		mutable std::mutex m_formatterMutex;
+		void AddLogger(Logger& logger);
+		void DeleteLogger(Logger& logger);
+		// Caller must hold m_configMutex.
+		void RefreshAllLoggersUnlocked() noexcept;
+		uint8_t CalcThresholdUnlocked(string_view_t apartment) const noexcept;
 
-		bool m_allEnabled = false;
-		std::set<string_t> m_except;
-		std::set<Logger*> m_loggers;
+		std::atomic<std::shared_ptr<const StrategyVec>> m_strategies;
+		std::mutex m_strategiesWriteMutex;
+
+		mutable std::mutex m_configMutex;
 		LogLevel m_globalLevel = LogLevel::Debug;
+		bool m_allEnabled = false;
+		std::set<string_t, std::less<>> m_except; // heterogeneous lookup: find accepts string_view_t
+		std::set<Logger*> m_loggers;
 
-		std::unique_ptr<Logger> m_defaultLogger;
+		mutable std::mutex m_formatterMutex;
 		std::shared_ptr<LogFormatter> m_defaultFormatter;
+
+		// Declared last so it is destroyed first; see ~LoggerCore.
+		std::unique_ptr<Logger> m_defaultLogger;
+		std::once_flag m_defaultLoggerOnce;
 	};
 
 	// ===========================================================================
@@ -204,29 +267,35 @@ namespace WinUtils {
 		explicit Logger(string_view_t apartment, LoggerInitProc proc = [](Logger&) {});
 		~Logger();
 
-		string_t GetApartment() const noexcept { return m_apartment; }
+		Logger(const Logger&) = delete;
+		Logger& operator=(const Logger&) = delete;
+
+		const string_t& GetApartment() const noexcept { return m_apartment; }
 
 		void Log(LogLevel level, string_view_t msg) const noexcept {
-			LogImpl(level, msg);
+			if (msg.empty() || !ShouldLog(level)) return;
+			LoggerCore::Inst().Dispatch(level, msg);
 		}
+
 		template<typename... Args>
-		void Log(LogLevel level, string_view_t fmt, Args&&... args) noexcept {
+		void Log(LogLevel level, string_view_t fmt, Args&&... args) const noexcept {
 			FormatAndLog(level, fmt, std::forward<Args>(args)...);
 		}
+
 		template<typename... Args>
-		void Debug(string_view_t fmt, Args&&... args) noexcept {
+		void Debug(string_view_t fmt, Args&&... args) const noexcept {
 			FormatAndLog(LogLevel::Debug, fmt, std::forward<Args>(args)...);
 		}
 		template<typename... Args>
-		void Info(string_view_t fmt, Args&&... args) noexcept {
+		void Info(string_view_t fmt, Args&&... args) const noexcept {
 			FormatAndLog(LogLevel::Info, fmt, std::forward<Args>(args)...);
 		}
 		template<typename... Args>
-		void Warn(string_view_t fmt, Args&&... args) noexcept {
+		void Warn(string_view_t fmt, Args&&... args) const noexcept {
 			FormatAndLog(LogLevel::Warn, fmt, std::forward<Args>(args)...);
 		}
 		template<typename... Args>
-		void Error(string_view_t fmt, Args&&... args) noexcept {
+		void Error(string_view_t fmt, Args&&... args) const noexcept {
 			FormatAndLog(LogLevel::Error, fmt, std::forward<Args>(args)...);
 		}
 
@@ -237,20 +306,42 @@ namespace WinUtils {
 		}
 
 	private:
+		friend class LoggerCore;
+
+		void UpdateThreshold(uint8_t t) noexcept {
+			m_threshold.store(t, std::memory_order_relaxed);
+		}
+
+		// Single relaxed atomic load: the only check on the hot path.
+		bool ShouldLog(LogLevel level) const noexcept {
+			return static_cast<uint8_t>(level) >=
+				m_threshold.load(std::memory_order_relaxed);
+		}
+
 		template<typename... Args>
 		void FormatAndLog(LogLevel level, string_view_t fmt, Args&&... args) const noexcept {
+			// Return before tuple construction / vformat when disabled.
+			if (fmt.empty() || !ShouldLog(level)) return;
+
 			if constexpr (sizeof...(Args) == 0) {
-				LogImpl(level, fmt);
+				LoggerCore::Inst().Dispatch(level, fmt);
 			}
 			else {
-				auto tup = std::tuple<std::decay_t<Args>...>(std::forward<Args>(args)...);
-				std::apply([this, level, fmt](auto&... vals) {
-					LogImpl(level, std::vformat(fmt, make_tformat_args(vals...)));
-					}, tup);
+				// noexcept contract: a bad format string or OOM must not terminate.
+				try {
+					auto tup = std::tuple<std::decay_t<Args>...>(std::forward<Args>(args)...);
+					std::apply([level, fmt](auto&... vals) {
+						auto s = std::vformat(fmt, make_tformat_args(vals...));
+						LoggerCore::Inst().Dispatch(level, s);
+						}, tup);
+				}
+				catch (...) {
+				}
 			}
 		}
-		void LogImpl(LogLevel level, string_view_t msg) const noexcept;
+
 		string_t m_apartment;
+		std::atomic<uint8_t> m_threshold{ kLogDisabledThreshold };
 	};
 
 	// ---------- WuLog global convenience functions ----------
