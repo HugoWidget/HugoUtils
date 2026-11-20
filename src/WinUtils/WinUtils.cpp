@@ -216,6 +216,21 @@ namespace WinUtils {
 		return true;
 	}
 
+	bool EnableDpiAwareness() {
+		// Windows 8.1+: PROCESS_SYSTEM_DPI_AWARE via shcore
+		HMODULE shcore = LoadLibraryW(L"shcore.dll");
+		if (shcore) {
+			using SetProcessDpiAwarenessFn = HRESULT(WINAPI*)(int);
+			auto setAwareness = reinterpret_cast<SetProcessDpiAwarenessFn>(
+				GetProcAddress(shcore, "SetProcessDpiAwareness"));
+			const HRESULT hr = setAwareness ? setAwareness(1) : E_FAIL;
+			FreeLibrary(shcore);
+			if (SUCCEEDED(hr)) return true;
+		}
+		// Older systems
+		return SetProcessDPIAware() != FALSE;
+	}
+
 	bool IsWindowFullScreen(HWND hWnd, int tolerance, bool relative) {
 		if (!IsWindow(hWnd)) return false;
 

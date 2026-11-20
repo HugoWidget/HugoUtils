@@ -63,6 +63,7 @@ namespace WinUtils {
 	WUAPI bool IsWindowTopMost(HWND hwnd);
 	WUAPI bool SetWindowTopMost(HWND hwnd, bool isTopMost);
 	WUAPI bool ForceHideWindow(HWND hwnd);
+	WUAPI bool EnableDpiAwareness();
 	WUAPI bool IsWindowFullScreen(HWND hWnd, int tolerance = 0, bool relative = false);
 	WUAPI bool IsWindowFullScreen(int x, int y, int cx, int cy, int tolerance, bool relative);
 	WUAPI RECT GetWindowRect(HWND hWnd);
